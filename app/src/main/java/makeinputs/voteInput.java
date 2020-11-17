@@ -12,11 +12,11 @@ import java.util.Scanner;
 public class voteInput{
     public voteInput(int msgSize){
         try{
-            String inFilePath = new String("../../vote.in");
-            Scanner scanner = new Scanner(new File("../../votePP.in"));
-            File filetmp = new File("../../vote_tmp.in");
-			File filePublic = new File("../../votePP.in");
-            File filePrivate = new File("../../vote.in");
+            String inFilePath = new String("./vote.in");
+            Scanner scanner = new Scanner(new File("./votePP.in"));
+            File filetmp = new File("./vote_tmp.in");
+			File filePublic = new File("./votePP.in");
+            File filePrivate = new File("./vote.in");
             
             FileWriter fwTmp = new FileWriter(filetmp,true);
 			FileReader frPublic = new FileReader(filePublic);
@@ -64,7 +64,7 @@ public class voteInput{
             brPrivate.close();
             
             Runtime runtime = Runtime.getRuntime();
-            Process process = runtime.exec("mv ../../voting_tmp.in " + inFilePath);
+            Process process = runtime.exec("mv ./voting_tmp.in " + inFilePath);
             System.out.println(inFilePath);
 		}catch(FileNotFoundException e){
 			System.err.println(e);

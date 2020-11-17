@@ -27,141 +27,182 @@
 #include <libff/algebra/curves/public_params.hpp>
 #include <libsnark/common/default_types/r1cs_gg_ppzksnark_pp.hpp>
 #include <libsnark/relations/constraint_satisfaction_problems/r1cs/examples/r1cs_examples.hpp>
-#include <libsnark/zk_proof_systems/ppzksnark/r1cs_gg_ppzksnark/examples/run_r1cs_gg_ppzksnark.hpp>
+#include <libsnark/jsnark_interface/CircuitReader.hpp>
+//#include "CircuitReader.hpp"
+#include <libsnark/gadgetlib2/integration.hpp>
+#include <libsnark/gadgetlib2/adapters.hpp>
+#include <libsnark/zk_proof_systems/ppzksnark/voting/r1cs_gg_ppzksnark.hpp>
+#include <libsnark/zk_proof_systems/ppzksnark/voting/run_r1cs_gg_ppzksnark.hpp>
+// #include <libsnark/zk_proof_systems/ppzksnark/voting/r1cs_gg_ppzksnark.hpp>
+
+#include <libsnark/common/default_types/r1cs_gg_ppzksnark_pp.hpp>
+
+
 using namespace libsnark;
 using namespace std;
 
-template<typename ppT>
-bool run1_r1cs_gg_ppzksnark(const r1cs_example<libff::Fr<ppT> > &example,
-                           const bool test_serialization)
-{
-    libff::enter_block("Call to run_r1cs_gg_ppzksnark");
-
-    LOGD("R1CS GG-ppzkSNARK Generator");
-    r1cs_gg_ppzksnark_keypair<ppT> keypair = r1cs_gg_ppzksnark_generator<ppT>(example.constraint_system);
-    printf("\n"); libff::print_indent(); libff::print_mem("after generator");
-    r1cs_gg_ppzksnark_processed_verification_key<ppT> pvk = r1cs_gg_ppzksnark_verifier_process_vk<ppT>(keypair.vk);
-
-//    if (test_serialization)
-//    {
-//        libff::enter_block("Test serialization of keys");
-//        keypair.pk = libff::reserialize<r1cs_gg_ppzksnark_proving_key<ppT> >(keypair.pk);
-//        keypair.vk = libff::reserialize<r1cs_gg_ppzksnark_verification_key<ppT> >(keypair.vk);
-//        pvk = libff::reserialize<r1cs_gg_ppzksnark_processed_verification_key<ppT> >(pvk);
-//        libff::leave_block("Test serialization of keys");
-//    }
-
-
-
-
-    LOGD("R1CS GG-ppzkSNARK Prover");
-    r1cs_gg_ppzksnark_proof<ppT> proof = r1cs_gg_ppzksnark_prover<ppT>(keypair.pk, example.primary_input, example.auxiliary_input);
-    printf("\n"); libff::print_indent(); libff::print_mem("after prover");
-
-//    if (test_serialization)
-//    {
-//        libff::enter_block("Test serialization of proof");
-//        proof = libff::reserialize<r1cs_gg_ppzksnark_proof<ppT> >(proof);
-//        libff::leave_block("Test serialization of proof");
-//    }
-//
-    LOGD("R1CS GG-ppzkSNARK Verifier");
-
-    //proof.g_A = libff::G1<ppT>::random_element();
-    const bool ans = r1cs_gg_ppzksnark_verifier_strong_IC<ppT>(keypair.vk, example.primary_input, proof);
-    printf("\n"); libff::print_indent(); libff::print_mem("after verifier");
-    LOGD("* The verification result is: %s\n", (ans ? "PASS" : "FAIL"));
-
-    LOGD("R1CS GG-ppzkSNARK Online Verifier");
-    const bool ans2 = r1cs_gg_ppzksnark_online_verifier_strong_IC<ppT>(pvk, example.primary_input, proof);
-    assert(ans == ans2);
-
-    test_affine_verifier<ppT>(keypair.vk, example.primary_input, proof, ans);
-
-    libff::leave_block("Call to run_r1cs_gg_ppzksnark");
-
-
-
-    const r1cs_gg_ppzksnark_verification_key<ppT> &vk = keypair.vk;
-    r1cs_gg_ppzksnark_processed_verification_key<ppT> pvk_ = r1cs_gg_ppzksnark_verifier_process_vk<ppT>(vk);
-    LOGD("accumulation_vector");
-    //const accumulation_vector<libff::G1<ppT> > accumulated_IC = pvk.gamma_ABC_g1.template accumulate_chunk<libff::Fr<ppT> >(primary_input.begin(), primary_input.end(), 0);
-    libff::G1<ppT> acc1 = libff::G1<ppT>::zero();
-    LOGD("example.primary_input.size() = %d",example.primary_input.size());
-    LOGD("pvk.gamma_ABC_g1.rest.size() = %d",pvk_.gamma_ABC_g1.rest.size());
-    for(size_t i = 0; i< pvk_.gamma_ABC_g1.rest.size(); i++)
-        acc1 = example.primary_input[i]*pvk_.gamma_ABC_g1.rest[i] + acc1;
-    acc1 = pvk_.gamma_ABC_g1.first + acc1;
-    libff::G1<ppT> &acc = acc1;
-    bool result = true;
-    if (!proof.is_well_formed())
-    {
-        if (!libff::inhibit_profiling_info)
-        {
-            libff::print_indent(); printf("At least one of the proof elements does not lie on the curve.\n");
-        }
-        result = false;
-    }
-    const libff::G1_precomp<ppT> proof_g_A_precomp = ppT::precompute_G1(proof.g_A);
-    const libff::G2_precomp<ppT> proof_g_B_precomp = ppT::precompute_G2(proof.g_B);
-    const libff::G1_precomp<ppT> proof_g_C_precomp = ppT::precompute_G1(proof.g_C);
-    const libff::G1_precomp<ppT> acc_precomp = ppT::precompute_G1(acc1);
-
-    const libff::Fqk<ppT> QAP1 = ppT::miller_loop(proof_g_A_precomp,  proof_g_B_precomp);
-    const libff::Fqk<ppT> QAP2 = ppT::double_miller_loop(
-            acc_precomp, pvk_.vk_gamma_g2_precomp,
-            proof_g_C_precomp, pvk_.vk_delta_g2_precomp);
-    const libff::GT<ppT> QAP = ppT::final_exponentiation(QAP1 * QAP2.unitary_inverse());
-    if (QAP != pvk_.vk_alpha_g1_beta_g2)
-    {
-        LOGD("QAP verify = %d", QAP == pvk_.vk_alpha_g1_beta_g2);
-        if (!libff::inhibit_profiling_info)
-        {
-            LOGD("QAP divisibility check failed.");
-            libff::print_indent(); printf("QAP divisibility check failed.\n");
-        }
-        result = false;
-    }
-    LOGD("result = %d", result);
-
-
-
-    return ans;
-}
-
-template<typename ppT>
-bool test_r1cs_gg_ppzksnark(size_t num_constraints,
-                            size_t input_size)
-{
-    LOGD("(enter) Test R1CS GG-ppzkSNARK");
-
-    const bool test_serialization = true;
-    r1cs_example<libff::Fr<ppT> > example = generate_r1cs_example_with_binary_input<libff::Fr<ppT> >(num_constraints, input_size);
-    const bool bit = run1_r1cs_gg_ppzksnark<ppT>(example, test_serialization);
-    return bit;
-
-    //libff::print_header("(leave) Test R1CS GG-ppzkSNARK");
-}
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_example_snarkportingtest_MainActivity_stringFromJNI(
         JNIEnv* env,
-        jobject /* this */) {
-    mpz_t bn_a, bn_b, bn_sum;
-    const char *cc_a, *cc_b;
-    jstring jst_sum;
-    char *c_sum;
-    BIGNUM *key = BN_new();
+        jobject jobj,
+        jstring task, jstring mode) {
 
-    int a = sizeof(unsigned long int);
-    mpz_inits(bn_a, bn_b, bn_sum, NULL);
+//    libff::alt_bn128_pp::init_public_params();
 
-    std::cout << "Hello from C++ !!" << std::endl;
-    libff::alt_bn128_pp::init_public_params();
+//    libff::start_profiling();
 
     libff::start_profiling();
-    bool bit = test_r1cs_gg_ppzksnark<default_r1cs_gg_ppzksnark_pp>(1000, 100);
-    int bits = bit;
-    string ssInt= to_string(bits);
-    BN_set_word(key,12);
-    return env->NewStringUTF(ssInt.c_str());
+    gadgetlib2::initPublicParamsFromDefaultPp();
+    gadgetlib2::GadgetLibAdapter::resetVariableIndex();
+    ProtoboardPtr pb = gadgetlib2::Protoboard::create(gadgetlib2::R1P);
+
+    int inputStartIndex = 0;
+//    if(argc == 6){
+//        if(strcmp(argv[1], "gg") != 0){
+//            cout << "Invalid Argument - Terminating.." << endl;
+//            return -1;
+//        } else{
+//            cout << "Using ppzsknark in the generic group model [Gro16]." << endl;
+//        }
+//        inputStartIndex = 1;
+//    }
+    const char *task_ = (env)->GetStringUTFChars(task, NULL);
+    const char *mode_ = (env)->GetStringUTFChars(mode, NULL);
+
+    char path1[100] = "../../java/makeinputs/";
+    char path2[100] = "../makeinputs/";
+    char* arithpath = strcat(strcat(path1, task_),".arith");
+    char* inpath = strcat(strcat(path2, task_),".in");
+    // Read the circuit, evaluate, and translate constraints
+    LOGD("%s", arithpath);
+    LOGD("%s", inpath);
+    CircuitReader reader(arithpath, inpath, pb);
+//    r1cs_constraint_system<FieldT> cs = get_constraint_system_from_gadgetlib2(
+//            *pb);
+//    const r1cs_variable_assignment<FieldT> full_assignment =
+//            get_variable_assignment_from_gadgetlib2(*pb);
+//    cs.primary_input_size = reader.getNumInputs() + reader.getNumOutputs();
+//    cs.auxiliary_input_size = full_assignment.size() - cs.num_inputs();
+//
+//    // extract primary and auxiliary input
+//    const r1cs_primary_input<FieldT> primary_input(full_assignment.begin(),
+//                                                   full_assignment.begin() + cs.num_inputs());
+//    const r1cs_auxiliary_input<FieldT> auxiliary_input(
+//            full_assignment.begin() + cs.num_inputs(), full_assignment.end());
+//
+//
+//    // only print the circuit output values if both flags MONTGOMERY and BINARY outputs are off (see CMakeLists file)
+//    // In the default case, these flags should be ON for faster performance.
+//
+//#if !defined(MONTGOMERY_OUTPUT) && !defined(OUTPUT_BINARY)
+//    cout << endl << "Printing output assignment in readable format:: " << endl;
+//    std::vector<Wire> outputList = reader.getOutputWireIds();
+//    int start = reader.getNumInputs();
+//    int end = reader.getNumInputs() +reader.getNumOutputs();
+//    for (int i = start ; i < end; i++) {
+//        cout << "[output]" << " Value of Wire # " << outputList[i-reader.getNumInputs()] << " :: ";
+//        cout << primary_input[i];
+//        cout << endl;
+//    }
+//    cout << endl;
+//#endif
+//
+//    //assert(cs.is_valid());
+//
+//    // removed cs.is_valid() check due to a suspected (off by 1) issue in a newly added check in their method.
+//    // A follow-up will be added.
+//    if(!cs.is_satisfied(primary_input, auxiliary_input)){
+//        cout << "The constraint system is  not satisifed by the value assignment - Terminating." << endl;
+//        LOGD("1194");
+//    }
+//    r1cs_example<FieldT> example(cs, primary_input, auxiliary_input);
+//    const bool test_serialization = false;
+//    bool successBit = false;
+//    //string name = argv[2];
+//    char *name1;
+//    // strncpy(name1, argv[2], strlen(argv[2])-3);
+//    name1 = strtok(argv[2], ".");
+//    cout << argv[3] << endl;
+//    name1[strlen(name1)] = '\0';
+//    // cout << name1 << endl;
+//    // cout << "voterno : " << argv[4] << endl;
+//    string name = name1;
+//    // cout << name << endl;
+//    if(strcmp(argv[3], "setup") == 0)
+//    {
+//        libsnark::run_r1cs_gg_ppzksnark_setup<libsnark::default_r1cs_gg_ppzksnark_pp>(example, test_serialization, name);
+//
+//        return 0;
+//    }
+//    else if(strcmp(argv[3], "verify") == 0)
+//    {
+//        if(argc == 5) {
+//
+//            successBit = libsnark::run_r1cs_gg_ppzksnark_verify<libff::default_ec_pp>(example, test_serialization, name, argv[4]);
+//
+//        } else {
+//            // The following code makes use of the observation that
+//            // libsnark::default_r1cs_gg_ppzksnark_pp is the same as libff::default_ec_pp (see r1cs_gg_ppzksnark_pp.hpp)
+//            // otherwise, the following code won't work properly, as GadgetLib2 is hardcoded to use libff::default_ec_pp.
+//            successBit = libsnark::run_r1cs_gg_ppzksnark_verify<libsnark::default_r1cs_gg_ppzksnark_pp>(
+//                    example, test_serialization, name, argv[4]);
+//        }
+//
+//        if(!successBit){
+//            cout << "Problem occurred while running the ppzksnark algorithms .. " << endl;
+//            return 0;
+//        }
+//        return 0;
+//    }
+//    else if (strcmp(argv[3], "run") == 0)
+//    {
+//        if(argc == 5) {
+//
+//            libsnark::run_r1cs_gg_ppzksnark<libff::default_ec_pp>(example, test_serialization, name, argv[4]);
+//
+//        } else {
+//            // The following code makes use of the observation that
+//            // libsnark::default_r1cs_gg_ppzksnark_pp is the same as libff::default_ec_pp (see r1cs_gg_ppzksnark_pp.hpp)
+//            // otherwise, the following code won't work properly, as GadgetLib2 is hardcoded to use libff::default_ec_pp.
+//            libsnark::run_r1cs_gg_ppzksnark<libsnark::default_r1cs_gg_ppzksnark_pp>(
+//                    example, test_serialization, name, argv[4]);
+//        }
+//
+//
+//        return 0;
+//    }
+//    else if(strcmp(argv[3], "all") == 0)
+//    {
+//        libsnark::run_r1cs_gg_ppzksnark_setup<libsnark::default_r1cs_gg_ppzksnark_pp>(example, test_serialization, name);
+//
+//        if(argc == 5) {
+//
+//            libsnark::run_r1cs_gg_ppzksnark<libff::default_ec_pp>(example, test_serialization, name, argv[4]);
+//
+//        } else {
+//            // The following code makes use of the observation that
+//            // libsnark::default_r1cs_gg_ppzksnark_pp is the same as libff::default_ec_pp (see r1cs_gg_ppzksnark_pp.hpp)
+//            // otherwise, the following code won't work properly, as GadgetLib2 is hardcoded to use libff::default_ec_pp.
+//            libsnark::run_r1cs_gg_ppzksnark<libsnark::default_r1cs_gg_ppzksnark_pp>(
+//                    example, test_serialization, name, argv[4]);
+//        }
+//
+//        if(argc == 5) {
+//
+//            successBit = libsnark::run_r1cs_gg_ppzksnark_verify<libff::default_ec_pp>(example, test_serialization, name, argv[4]);
+//
+//        } else {
+//            // The following code makes use of the observation that
+//            // libsnark::default_r1cs_gg_ppzksnark_pp is the same as libff::default_ec_pp (see r1cs_gg_ppzksnark_pp.hpp)
+//            // otherwise, the following code won't work properly, as GadgetLib2 is hardcoded to use libff::default_ec_pp.
+//            successBit = libsnark::run_r1cs_gg_ppzksnark_verify<libsnark::default_r1cs_gg_ppzksnark_pp>(
+//                    example, test_serialization, name, argv[4]);
+//        }
+//
+//        if(!successBit){
+//            cout << "Problem occurred while running the ppzksnark algorithms .. " << endl;
+//            return 0;
+//        }
+
+    return env->NewStringUTF("1");
 }
