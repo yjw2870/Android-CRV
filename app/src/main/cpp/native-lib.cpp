@@ -45,7 +45,8 @@ extern "C" JNIEXPORT jstring JNICALL
 Java_com_example_snarkportingtest_MainActivity_stringFromJNI(
         JNIEnv* env,
         jobject jobj,
-        jstring task, jstring mode) {
+        jstring task, jstring mode
+        ) {
 
 //    libff::alt_bn128_pp::init_public_params();
 
@@ -66,143 +67,131 @@ Java_com_example_snarkportingtest_MainActivity_stringFromJNI(
 //        }
 //        inputStartIndex = 1;
 //    }
+
     const char *task_ = (env)->GetStringUTFChars(task, NULL);
     const char *mode_ = (env)->GetStringUTFChars(mode, NULL);
+    char *path1, *path2;
 
-    char path1[100] = "../../java/makeinputs/";
-    char path2[100] = "../makeinputs/";
-    char* arithpath = strcat(strcat(path1, task_),".arith");
-    char* inpath = strcat(strcat(path2, task_),".in");
+    if(strcmp("vote", task_) == 0) {
+        path1 = "/data/data/com.example.snarkportingtest/files/votearith.txt";
+        path2 = "/data/data/com.example.snarkportingtest/files/voteinput.txt";
+    }
     // Read the circuit, evaluate, and translate constraints
-    LOGD("%s", arithpath);
-    LOGD("%s", inpath);
-    CircuitReader reader(arithpath, inpath, pb);
-//    r1cs_constraint_system<FieldT> cs = get_constraint_system_from_gadgetlib2(
-//            *pb);
-//    const r1cs_variable_assignment<FieldT> full_assignment =
-//            get_variable_assignment_from_gadgetlib2(*pb);
-//    cs.primary_input_size = reader.getNumInputs() + reader.getNumOutputs();
-//    cs.auxiliary_input_size = full_assignment.size() - cs.num_inputs();
-//
-//    // extract primary and auxiliary input
-//    const r1cs_primary_input<FieldT> primary_input(full_assignment.begin(),
-//                                                   full_assignment.begin() + cs.num_inputs());
-//    const r1cs_auxiliary_input<FieldT> auxiliary_input(
-//            full_assignment.begin() + cs.num_inputs(), full_assignment.end());
-//
-//
-//    // only print the circuit output values if both flags MONTGOMERY and BINARY outputs are off (see CMakeLists file)
-//    // In the default case, these flags should be ON for faster performance.
-//
-//#if !defined(MONTGOMERY_OUTPUT) && !defined(OUTPUT_BINARY)
-//    cout << endl << "Printing output assignment in readable format:: " << endl;
-//    std::vector<Wire> outputList = reader.getOutputWireIds();
-//    int start = reader.getNumInputs();
-//    int end = reader.getNumInputs() +reader.getNumOutputs();
-//    for (int i = start ; i < end; i++) {
-//        cout << "[output]" << " Value of Wire # " << outputList[i-reader.getNumInputs()] << " :: ";
-//        cout << primary_input[i];
-//        cout << endl;
-//    }
-//    cout << endl;
-//#endif
-//
-//    //assert(cs.is_valid());
-//
-//    // removed cs.is_valid() check due to a suspected (off by 1) issue in a newly added check in their method.
-//    // A follow-up will be added.
-//    if(!cs.is_satisfied(primary_input, auxiliary_input)){
-//        cout << "The constraint system is  not satisifed by the value assignment - Terminating." << endl;
-//        LOGD("1194");
-//    }
-//    r1cs_example<FieldT> example(cs, primary_input, auxiliary_input);
-//    const bool test_serialization = false;
-//    bool successBit = false;
-//    //string name = argv[2];
-//    char *name1;
-//    // strncpy(name1, argv[2], strlen(argv[2])-3);
-//    name1 = strtok(argv[2], ".");
-//    cout << argv[3] << endl;
-//    name1[strlen(name1)] = '\0';
-//    // cout << name1 << endl;
-//    // cout << "voterno : " << argv[4] << endl;
-//    string name = name1;
-//    // cout << name << endl;
-//    if(strcmp(argv[3], "setup") == 0)
-//    {
-//        libsnark::run_r1cs_gg_ppzksnark_setup<libsnark::default_r1cs_gg_ppzksnark_pp>(example, test_serialization, name);
-//
-//        return 0;
-//    }
-//    else if(strcmp(argv[3], "verify") == 0)
-//    {
-//        if(argc == 5) {
-//
-//            successBit = libsnark::run_r1cs_gg_ppzksnark_verify<libff::default_ec_pp>(example, test_serialization, name, argv[4]);
-//
-//        } else {
-//            // The following code makes use of the observation that
-//            // libsnark::default_r1cs_gg_ppzksnark_pp is the same as libff::default_ec_pp (see r1cs_gg_ppzksnark_pp.hpp)
-//            // otherwise, the following code won't work properly, as GadgetLib2 is hardcoded to use libff::default_ec_pp.
-//            successBit = libsnark::run_r1cs_gg_ppzksnark_verify<libsnark::default_r1cs_gg_ppzksnark_pp>(
-//                    example, test_serialization, name, argv[4]);
-//        }
-//
-//        if(!successBit){
-//            cout << "Problem occurred while running the ppzksnark algorithms .. " << endl;
-//            return 0;
-//        }
-//        return 0;
-//    }
-//    else if (strcmp(argv[3], "run") == 0)
-//    {
-//        if(argc == 5) {
-//
-//            libsnark::run_r1cs_gg_ppzksnark<libff::default_ec_pp>(example, test_serialization, name, argv[4]);
-//
-//        } else {
-//            // The following code makes use of the observation that
-//            // libsnark::default_r1cs_gg_ppzksnark_pp is the same as libff::default_ec_pp (see r1cs_gg_ppzksnark_pp.hpp)
-//            // otherwise, the following code won't work properly, as GadgetLib2 is hardcoded to use libff::default_ec_pp.
-//            libsnark::run_r1cs_gg_ppzksnark<libsnark::default_r1cs_gg_ppzksnark_pp>(
-//                    example, test_serialization, name, argv[4]);
-//        }
-//
-//
-//        return 0;
-//    }
-//    else if(strcmp(argv[3], "all") == 0)
-//    {
-//        libsnark::run_r1cs_gg_ppzksnark_setup<libsnark::default_r1cs_gg_ppzksnark_pp>(example, test_serialization, name);
-//
-//        if(argc == 5) {
-//
-//            libsnark::run_r1cs_gg_ppzksnark<libff::default_ec_pp>(example, test_serialization, name, argv[4]);
-//
-//        } else {
-//            // The following code makes use of the observation that
-//            // libsnark::default_r1cs_gg_ppzksnark_pp is the same as libff::default_ec_pp (see r1cs_gg_ppzksnark_pp.hpp)
-//            // otherwise, the following code won't work properly, as GadgetLib2 is hardcoded to use libff::default_ec_pp.
-//            libsnark::run_r1cs_gg_ppzksnark<libsnark::default_r1cs_gg_ppzksnark_pp>(
-//                    example, test_serialization, name, argv[4]);
-//        }
-//
-//        if(argc == 5) {
-//
-//            successBit = libsnark::run_r1cs_gg_ppzksnark_verify<libff::default_ec_pp>(example, test_serialization, name, argv[4]);
-//
-//        } else {
-//            // The following code makes use of the observation that
-//            // libsnark::default_r1cs_gg_ppzksnark_pp is the same as libff::default_ec_pp (see r1cs_gg_ppzksnark_pp.hpp)
-//            // otherwise, the following code won't work properly, as GadgetLib2 is hardcoded to use libff::default_ec_pp.
-//            successBit = libsnark::run_r1cs_gg_ppzksnark_verify<libsnark::default_r1cs_gg_ppzksnark_pp>(
-//                    example, test_serialization, name, argv[4]);
-//        }
-//
-//        if(!successBit){
-//            cout << "Problem occurred while running the ppzksnark algorithms .. " << endl;
-//            return 0;
-//        }
+
+    CircuitReader reader(path1, path2, pb);
+    r1cs_constraint_system<FieldT> cs = get_constraint_system_from_gadgetlib2(
+            *pb);
+    const r1cs_variable_assignment<FieldT> full_assignment =
+            get_variable_assignment_from_gadgetlib2(*pb);
+    cs.primary_input_size = reader.getNumInputs() + reader.getNumOutputs();
+    cs.auxiliary_input_size = full_assignment.size() - cs.num_inputs();
+
+    // extract primary and auxiliary input
+    const r1cs_primary_input<FieldT> primary_input(full_assignment.begin(),
+                                                   full_assignment.begin() + cs.num_inputs());
+    const r1cs_auxiliary_input<FieldT> auxiliary_input(
+            full_assignment.begin() + cs.num_inputs(), full_assignment.end());
+
+
+    // only print the circuit output values if both flags MONTGOMERY and BINARY outputs are off (see CMakeLists file)
+    // In the default case, these flags should be ON for faster performance.performance
+
+#if !defined(MONTGOMERY_OUTPUT) && !defined(OUTPUT_BINARY)
+    LOGD( "Printing output assignment in readable format:: " );
+    std::vector<Wire> outputList = reader.getOutputWireIds();
+    int start = reader.getNumInputs();
+    int end = reader.getNumInputs() +reader.getNumOutputs();
+    for (int i = start ; i < end; i++) {
+        cout << "[output]" << " Value of Wire # " << outputList[i-reader.getNumInputs()] << " :: ";
+        cout << primary_input[i];
+        cout << endl;
+    }
+    cout << endl;
+#endif
+
+    assert(cs.is_valid());
+
+    // removed cs.is_valid() check due to a suspected (off by 1) issue in a newly added check in their method.
+    // A follow-up will be added.
+    if(!cs.is_satisfied(primary_input, auxiliary_input)){
+        cout << "The constraint system is  not satisifed by the value assignment - Terminating." << endl;
+        LOGD("1194");
+    }
+    r1cs_example<FieldT> example(cs, primary_input, auxiliary_input);
+    const bool test_serialization = false;
+    bool successBit = false;
+    //string name = argv[2];
+    char *name1;
+    // strncpy(name1, argv[2], strlen(argv[2])-3);
+    LOGD("%s\n", mode_);
+    // cout << name1 << endl;
+    // cout << "voterno : " << argv[4] << endl;
+    string name = task_;
+    // cout << name << endl;
+    if(strcmp(mode_, "setup") == 0)
+    {
+        LOGD("setup");
+
+        libsnark::run_r1cs_gg_ppzksnark_setup<libsnark::default_r1cs_gg_ppzksnark_pp>(example, test_serialization, name);
+
+        return env->NewStringUTF("1");
+    }
+    else if(strcmp(mode_, "verify") == 0)
+    {
+        LOGD("verify");
+            // The following code makes use of the observation that
+            // libsnark::default_r1cs_gg_ppzksnark_pp is the same as libff::default_ec_pp (see r1cs_gg_ppzksnark_pp.hpp)
+            // otherwise, the following code won't work properly, as GadgetLib2 is hardcoded to use libff::default_ec_pp.
+            successBit = libsnark::run_r1cs_gg_ppzksnark_verify<libsnark::default_r1cs_gg_ppzksnark_pp>(
+                    example, test_serialization, name);
+
+        if(!successBit){
+            cout << "Problem occurred while running the ppzksnark algorithms .. " << endl;
+            return env->NewStringUTF("0");
+        }
+        return env->NewStringUTF("1");
+    }
+    else if (strcmp(mode_, "run") == 0)
+    {
+        LOGD("run");
+
+        // The following code makes use of the observation that
+            // libsnark::default_r1cs_gg_ppzksnark_pp is the same as libff::default_ec_pp (see r1cs_gg_ppzksnark_pp.hpp)
+            // otherwise, the following code won't work properly, as GadgetLib2 is hardcoded to use libff::default_ec_pp.
+            libsnark::run_r1cs_gg_ppzksnark<libsnark::default_r1cs_gg_ppzksnark_pp>(
+                    example, test_serialization, name);
+
+        return env->NewStringUTF("1");
+    }
+    else if(strcmp(mode_, "all") == 0) {
+        LOGD("all");
+
+        libsnark::run_r1cs_gg_ppzksnark_setup<libsnark::default_r1cs_gg_ppzksnark_pp>(example,
+                                                                                      test_serialization,
+                                                                                      name);
+
+
+        // The following code makes use of the observation that
+        // libsnark::default_r1cs_gg_ppzksnark_pp is the same as libff::default_ec_pp (see r1cs_gg_ppzksnark_pp.hpp)
+        // otherwise, the following code won't work properly, as GadgetLib2 is hardcoded to use libff::default_ec_pp.
+        libsnark::run_r1cs_gg_ppzksnark<libsnark::default_r1cs_gg_ppzksnark_pp>(
+                example, test_serialization, task_ );
+
+        // The following code makes use of the observation that
+        // libsnark::default_r1cs_gg_ppzksnark_pp is the same as libff::default_ec_pp (see r1cs_gg_ppzksnark_pp.hpp)
+        // otherwise, the following code won't work properly, as GadgetLib2 is hardcoded to use libff::default_ec_pp.
+        successBit = libsnark::run_r1cs_gg_ppzksnark_verify<libsnark::default_r1cs_gg_ppzksnark_pp>(
+                example, test_serialization, name);
+
+
+        if (!successBit) {
+            LOGD("Problem occurred while running the ppzksnark algorithms .. " );
+            return env->NewStringUTF("0");
+        }
+        else{
+            LOGD("success");
+        }
+    }
 
     return env->NewStringUTF("1");
 }

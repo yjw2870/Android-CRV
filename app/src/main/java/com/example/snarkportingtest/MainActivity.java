@@ -1,29 +1,73 @@
 package com.example.snarkportingtest;
 
 import androidx.appcompat.app.AppCompatActivity;
-import java.io.File;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.FileOutputStream;
+import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 
+import java.io.File;
+
 public class MainActivity extends AppCompatActivity {
-    String task = "android.resource://" + R.class.getPackage().getName() + "/" ;
-    String mode = "setup";
-    // Used to load the 'native-lib' library on application startup.
+    String task =  "/data/data/com.example.snarkportingtest/files/" ;
+    String mode = "all";
+//     Used to load the 'native-lib' library on application startup.
     static {
         System.loadLibrary("native-lib");
     }
+    public void CopyFromPackage(int resID, String target) throws IOException
+    {
+        FileOutputStream lOutputStream = openFileOutput(target, Context.MODE_PRIVATE);
+        InputStream lInputStream = getResources().openRawResource(resID);
+        int readByte;
+        byte[] buff = new byte[8048];
 
+        while (( readByte = lInputStream.read(buff))!=-1)
+        {
+            lOutputStream.write(buff,0, readByte);
+        }
+
+        lOutputStream.flush();
+        lOutputStream.close();
+        lInputStream.close();
+    }
+    public void CopyIfNotExist(int resID, String target) throws IOException
+    {
+        File targetFile = new File(target);
+        if (!targetFile.exists())
+        {
+            CopyFromPackage(resID,targetFile.getName());
+        }
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        getResources().openRawResource(R.raw.vote);
 
+        String text = null;
+        try {
+            text = task + "votearith.txt";
+            CopyIfNotExist(R.raw.votearith, text);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        text = null;
+        try {
+            text = task + "voteinput.txt";
+            CopyIfNotExist(R.raw.voteinput, text);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
         // Example of a call to a native method
         TextView tv = findViewById(R.id.sample_text);
-        tv.setText(stringFromJNI(task, mode));
+        tv.setText(stringFromJNI("vote", "all"));
     }
 
     /**
