@@ -36,7 +36,7 @@
 // #include <libsnark/zk_proof_systems/ppzksnark/voting/r1cs_gg_ppzksnark.hpp>
 
 #include <libsnark/common/default_types/r1cs_gg_ppzksnark_pp.hpp>
-
+#include <unistd.h>
 
 using namespace libsnark;
 using namespace std;
@@ -134,7 +134,6 @@ Java_com_example_snarkportingtest_MainActivity_stringFromJNI(
 
         libsnark::run_r1cs_gg_ppzksnark_setup<libsnark::default_r1cs_gg_ppzksnark_pp>(example, test_serialization, name);
 
-        return env->NewStringUTF("1");
     }
     else if(strcmp(mode_, "verify") == 0)
     {
@@ -147,9 +146,9 @@ Java_com_example_snarkportingtest_MainActivity_stringFromJNI(
 
         if(!successBit){
             cout << "Problem occurred while running the ppzksnark algorithms .. " << endl;
-            return env->NewStringUTF("0");
+
         }
-        return env->NewStringUTF("1");
+
     }
     else if (strcmp(mode_, "run") == 0)
     {
@@ -161,7 +160,6 @@ Java_com_example_snarkportingtest_MainActivity_stringFromJNI(
             libsnark::run_r1cs_gg_ppzksnark<libsnark::default_r1cs_gg_ppzksnark_pp>(
                     example, test_serialization, name);
 
-        return env->NewStringUTF("1");
     }
     else if(strcmp(mode_, "all") == 0) {
         LOGD("all");
@@ -175,7 +173,7 @@ Java_com_example_snarkportingtest_MainActivity_stringFromJNI(
         // libsnark::default_r1cs_gg_ppzksnark_pp is the same as libff::default_ec_pp (see r1cs_gg_ppzksnark_pp.hpp)
         // otherwise, the following code won't work properly, as GadgetLib2 is hardcoded to use libff::default_ec_pp.
         libsnark::run_r1cs_gg_ppzksnark<libsnark::default_r1cs_gg_ppzksnark_pp>(
-                example, test_serialization, task_ );
+                example, test_serialization, name );
 
         // The following code makes use of the observation that
         // libsnark::default_r1cs_gg_ppzksnark_pp is the same as libff::default_ec_pp (see r1cs_gg_ppzksnark_pp.hpp)
@@ -186,11 +184,9 @@ Java_com_example_snarkportingtest_MainActivity_stringFromJNI(
 
         if (!successBit) {
             LOGD("Problem occurred while running the ppzksnark algorithms .. " );
-            return env->NewStringUTF("0");
+
         }
-        else{
-            LOGD("success");
-        }
+
     }
 
     return env->NewStringUTF("1");

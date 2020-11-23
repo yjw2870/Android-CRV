@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.io.FileOutputStream;
 import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.TextView;
 
 import java.io.File;
@@ -24,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
         FileOutputStream lOutputStream = openFileOutput(target, Context.MODE_PRIVATE);
         InputStream lInputStream = getResources().openRawResource(resID);
         int readByte;
-        byte[] buff = new byte[8048];
+        byte[] buff = new byte[999999];
 
         while (( readByte = lInputStream.read(buff))!=-1)
         {
@@ -67,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Example of a call to a native method
         TextView tv = findViewById(R.id.sample_text);
-        tv.setText(stringFromJNI("vote", "all"));
+        tv.setText(stringFromJNI("vote", "run"));
     }
 
     /**
