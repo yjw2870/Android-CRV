@@ -42,7 +42,7 @@ using namespace libsnark;
 using namespace std;
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_example_snarkportingtest_MainActivity_stringFromJNI(
+Java_com_example_snarkportingtest_SubActivity_stringFromJNI(
         JNIEnv* env,
         jobject jobj,
         jstring task, jstring mode
