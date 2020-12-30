@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
     public int standardSize_X, standardSize_Y;
     public float density;
 
-    public final static String ip = "192.168.219.100";
+    public final static String ip = "192.168.0.168";
     public final static int port = 9999;
 
 
@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
 //                        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
                     }
                 });
-        FirebaseMessaging.getInstance().subscribeToTopic("weather")
+        FirebaseMessaging.getInstance().subscribeToTopic("test")
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
