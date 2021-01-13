@@ -7,10 +7,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Point;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.InputFilter;
@@ -30,13 +32,24 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.messaging.FirebaseMessaging;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.Socket;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
@@ -67,6 +80,12 @@ public class MainActivity extends AppCompatActivity {
     // 스나크 확인용
     Button btn_snark;
     private static final int SNARK_CODE = 888;
+
+    //DB 확인용
+    TextView tv_test;
+    Button btn_db;
+    private String jsonString;
+    ArrayList<Votedetail> votedetails;
 
 
     private FirebaseAuth mAuth;
@@ -167,6 +186,16 @@ public class MainActivity extends AppCompatActivity {
                 intent.putExtra("vote","vote");
                 intent.putExtra("setup","setup");
                 startActivityForResult(intent, SNARK_CODE);
+            }
+        });
+
+        // DB 확인용
+        btn_db.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                votedetails = new ArrayList<Votedetail>();
+                DB_check task = new DB_check();
+                task.execute("http://192.168.219.100:80/project/connect.php");
             }
         });
     }
@@ -335,6 +364,8 @@ public class MainActivity extends AppCompatActivity {
         et_pwd = findViewById(R.id.et_pwd);
 
         btn_snark = findViewById(R.id.btn_snark);
+        btn_db = findViewById(R.id.btn_db);
+        tv_test = findViewById(R.id.tv_test);
 
     }
     private void TextSizeSet() {
@@ -345,5 +376,104 @@ public class MainActivity extends AppCompatActivity {
         btn_login.setTextSize((float) (standardSize_X/20));
         btn_signup.setTextSize((float) (standardSize_X/20));
         btn_admin.setTextSize((float) (standardSize_X/20));
+    }
+
+    private class DB_check extends AsyncTask<String, Void, String> {
+        ProgressDialog progressDialog;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            progressDialog = ProgressDialog.show(MainActivity.this, "please wait", null, true, true);
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+            String serverUrl = (String) strings[0];
+
+            try {
+                URL url = new URL(serverUrl);
+                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+
+                httpURLConnection.setReadTimeout(5000);
+                httpURLConnection.setConnectTimeout(5000);
+                httpURLConnection.setRequestMethod("POST");
+                httpURLConnection.connect();
+
+                int responseStatusCode = httpURLConnection.getResponseCode();
+                Log.d("TAG_DB", "POST response code - " + responseStatusCode);
+
+                InputStream inputStream;
+                if (responseStatusCode == HttpURLConnection.HTTP_OK) {
+                    inputStream = httpURLConnection.getInputStream();
+                } else {
+                    inputStream = httpURLConnection.getErrorStream();
+                }
+
+
+                InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF-8");
+                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+
+                StringBuilder sb = new StringBuilder();
+                String line = null;
+
+                while ((line = bufferedReader.readLine()) != null) {
+                    sb.append(line);
+                }
+
+
+                bufferedReader.close();
+
+
+                return sb.toString();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new String("Error: " + e.getMessage());
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+
+            jsonString = s;
+            votedetails = doParse();
+            progressDialog.dismiss();
+            tv_test.setText(votedetails.get(0).getTitle());
+            Toast.makeText(getApplicationContext(), votedetails.get(0).getTitle(),Toast.LENGTH_SHORT).show();
+            Log.d("TAG_DB_1", s);
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+            super.onProgressUpdate(values);
+        }
+
+        private ArrayList<Votedetail> doParse() { //void doParse(){ //
+            ArrayList<Votedetail> tmpvotelist = new ArrayList<Votedetail>();
+            try{
+                JSONObject jsonObject = new JSONObject(jsonString);
+                JSONArray jsonArray = jsonObject.getJSONArray("votelist");
+
+                for(int i = 0; i<jsonArray.length(); i++){
+                    Votedetail votedetail = new Votedetail();
+                    JSONObject item = jsonArray.getJSONObject(i);
+                    votedetail.setTitle(item.getString("title"));
+                    votedetail.setCreated(item.getString("admin"));
+                    votedetail.setStart(item.getString("start"));
+                    votedetail.setEnd(item.getString("end"));
+                    votedetail.setType(item.getString("type"));
+                    votedetail.setNote(item.getString("note"));
+
+                    tmpvotelist.add(votedetail);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.d("TAG_DB_error",e.getMessage());
+            }
+            return tmpvotelist;
+        }
     }
 }

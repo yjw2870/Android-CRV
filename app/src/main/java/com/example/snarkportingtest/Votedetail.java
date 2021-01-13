@@ -8,22 +8,18 @@ public class Votedetail implements Serializable {
     private String end;
     private String type;
     private String note;
-    private String group;
-    private String voted;
     private String created;
 
     public Votedetail() {
 
     }
 
-    public Votedetail(String title, String start, String end, String type, String note, String group, String voted, String created) {
+    public Votedetail(String title, String start, String end, String type, String note, String created) {
         this.title = title;
         this.start = start;
         this.end = end;
         this.type = type;
         this.note = note;
-        this.group = group;
-        this.voted = voted;
         this.created = created;
     }
 
@@ -65,22 +61,6 @@ public class Votedetail implements Serializable {
 
     public void setNote(String note) {
         this.note = note;
-    }
-
-    public String getGroup() {
-        return group;
-    }
-
-    public void setGroup(String group) {
-        this.group = group;
-    }
-
-    public String getVoted() {
-        return voted;
-    }
-
-    public void setVoted(String voted) {
-        this.voted = voted;
     }
 
     public String getCreated() {

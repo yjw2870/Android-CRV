@@ -2,6 +2,7 @@ package com.example.snarkportingtest;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +23,7 @@ public class VotelistAdapter extends RecyclerView.Adapter<VotelistAdapter.Voteli
     private Date start = null;
     private Date end = null;
 
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     private ArrayList<Votedetail> arrayList;
     private Context context;
@@ -56,6 +57,7 @@ public class VotelistAdapter extends RecyclerView.Adapter<VotelistAdapter.Voteli
 
         try {
             now = dateFormat.parse(dateFormat.format(now));
+            Log.d("TAG_DB_start",now.toString());
             start = dateFormat.parse(arrayList.get(position).getStart());
             end = dateFormat.parse(arrayList.get(position).getEnd());
         } catch (ParseException e) {

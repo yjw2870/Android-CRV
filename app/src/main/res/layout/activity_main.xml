@@ -109,6 +109,28 @@
         </LinearLayout>
 
     </LinearLayout>
+    <!-- DB 확인용-->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center">
+        <TextView
+            android:id="@+id/tv_test"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"/>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center">
+        <Button
+            android:id="@+id/btn_db"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="db 확인"
+            android:textSize="20sp"/>
+    </LinearLayout>
     <!-- 스나크 확인용-->
     <LinearLayout
         android:layout_width="match_parent"

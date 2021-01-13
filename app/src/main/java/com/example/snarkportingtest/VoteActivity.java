@@ -126,7 +126,7 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
         tv_votedetailtype.setText(votedetail.getType());
         tv_votedetailnote.setText(votedetail.getNote());
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         try {
             now = dateFormat.parse(dateFormat.format(now));
