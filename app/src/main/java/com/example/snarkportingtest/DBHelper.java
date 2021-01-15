@@ -13,20 +13,33 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String sql = "CREATE TABLE if not exists pk ("
+        String pk_table = "CREATE TABLE if not exists pk ("
                 + "_id integer primary key autoincrement,"
                 + "vote_id integer,"
                 + "pub_key text,"
                 + "voted integer);";
+        String votelist_table = "CREATE TABLE if not exists votelist ("
+                + "_id integer primary key autoincrement,"
+                + "vote_id integer,"
+                + "title text);";
+        String salt_table = "CREATE TABLE if not exists salt ("
+                + "_id integer primary key autoincrement,"
+                + "salt text);";
 
-        db.execSQL(sql);
+        db.execSQL(pk_table);
+        db.execSQL(votelist_table);
+        db.execSQL(salt_table);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        String sql = "DROP TABLE if exists pk";
+        String pk_table = "DROP TABLE if exists pk";
+        String votelist_table = "DROP TABLE if exists votelist";
+        String salt_table = "DROP TABLE if exists salt";
 
-        db.execSQL(sql);
+        db.execSQL(pk_table);
+        db.execSQL(votelist_table);
+        db.execSQL(salt_table);
         onCreate(db);
     }
 }
