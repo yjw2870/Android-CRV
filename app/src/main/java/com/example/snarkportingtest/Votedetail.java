@@ -3,6 +3,7 @@ package com.example.snarkportingtest;
 import java.io.Serializable;
 
 public class Votedetail implements Serializable {
+    private int vote_id;
     private String title;
     private String start;
     private String end;
@@ -14,13 +15,22 @@ public class Votedetail implements Serializable {
 
     }
 
-    public Votedetail(String title, String start, String end, String type, String note, String created) {
+    public Votedetail(int vote_id, String title, String start, String end, String type, String note, String created) {
+        this.vote_id = vote_id;
         this.title = title;
         this.start = start;
         this.end = end;
         this.type = type;
         this.note = note;
         this.created = created;
+    }
+
+    public int getVote_id() {
+        return vote_id;
+    }
+
+    public void setVote_id(int vote_id) {
+        this.vote_id = vote_id;
     }
 
     public String getTitle() {

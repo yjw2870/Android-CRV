@@ -111,8 +111,9 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
 //                Log.e("UsermainActivity", String.valueOf(databaseError.toException()));
 //            }
 //        });
+        // Mysql DB connect - Read votelist
         DB_check task = new DB_check();
-        task.execute("http://192.168.219.100:80/project/connect.php");
+        task.execute("http://192.168.219.100:80/project/votelist_read.php");
     }
 
     // 뒤로가기 하단 버튼 클릭시 로그아웃
@@ -280,7 +281,6 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
             jsonString = s;
             doParse();
             progressDialog.dismiss();
-            Toast.makeText(getApplicationContext(), votelist.get(0).getTitle(),Toast.LENGTH_SHORT).show();
             Log.d("TAG_DB_total", s);
 
         }
@@ -298,6 +298,7 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
                 for(int i = 0; i<jsonArray.length(); i++){
                     Votedetail votedetail = new Votedetail();
                     JSONObject item = jsonArray.getJSONObject(i);
+                    votedetail.setVote_id(item.getInt("vote_id"));
                     votedetail.setTitle(item.getString("title"));
                     votedetail.setCreated(item.getString("admin"));
                     votedetail.setStart(item.getString("start"));

@@ -3,22 +3,47 @@ package com.example.snarkportingtest;
 import java.io.Serializable;
 
 public class Candidate implements Serializable {
+    private int candidate_id;
+    private int vote_id;
     private String profile;
     private String name;
     private String group;
     private String note;
-    private int votes;
 
     public Candidate() {
 
     }
 
-    public Candidate(String profile, String name, String group, String note, int votes) {
+    public Candidate(int candidate_id, int vote_id, String profile, String name, String group, String note) {
+        this.candidate_id = candidate_id;
+        this.vote_id = vote_id;
         this.profile = profile;
         this.name = name;
         this.group = group;
         this.note = note;
-        this.votes = votes;
+    }
+    // for create vote - add candidate
+    public Candidate(String profile, String name, String group, String note) {
+        this.profile = profile;
+        this.name = name;
+        this.group = group;
+        this.note = note;
+    }
+
+    public int getCandidate_id() {
+        return candidate_id;
+    }
+
+    public void setCandidate_id(int candidate_id) {
+        this.candidate_id = candidate_id;
+    }
+
+    public int getVote_id() {
+        return vote_id;
+    }
+
+    public void setVote_id(int vote_id) {
+        this.vote_id = vote_id;
     }
 
     public String getProfile() {
@@ -51,13 +76,5 @@ public class Candidate implements Serializable {
 
     public void setNote(String note) {
         this.note = note;
-    }
-
-    public int getVotes() {
-        return votes;
-    }
-
-    public void setVotes(int votes) {
-        this.votes = votes;
     }
 }

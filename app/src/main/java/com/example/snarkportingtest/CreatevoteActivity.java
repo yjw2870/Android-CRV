@@ -368,7 +368,7 @@ public class CreatevoteActivity extends AppCompatActivity implements AdminCandid
                 String group = String.valueOf(data.getExtras().getString("group"));
                 String note = String.valueOf(data.getExtras().getString("note"));
                 Log.d("TAG1", "onActivityResult: "+name+group+note);
-                Candidate candidate = new Candidate(null,name, group, note, 0);
+                Candidate candidate = new Candidate(null,name, group, note);
                 candidates.add(candidate);
 
                 adapter.notifyDataSetChanged(); // 리스트 저장 및 새로고침

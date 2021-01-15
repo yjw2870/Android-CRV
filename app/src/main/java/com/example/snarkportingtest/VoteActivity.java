@@ -1,14 +1,17 @@
 package com.example.snarkportingtest;
 
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -24,10 +27,19 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.Socket;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -75,6 +87,10 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
 
     private String vote_state;
 
+    // Mysql DB
+    private String jsonString;
+    private int vote_id;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -89,7 +105,7 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
         user_id = (String) getintent.getExtras().get("user_id");
         Votedetail votedetail = (Votedetail) getintent.getExtras().get("vote");
 
-        final String vote_title = votedetail.getTitle();
+        vote_id = votedetail.getVote_id();
 
         rv_votecandidatelist.setHasFixedSize(true); // 리사이클러뷰 기존성능 강화
         rv_votecandidatelist.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));  // 투표목록 구분선
@@ -98,28 +114,28 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
         candidates = new ArrayList<>(); // Candidate 객체를 담을 어레이 리스트(어댑터 쪽으로)
         candidates.clear(); // 기존 배열 초기화
 
-        database = FirebaseDatabase.getInstance(); // 파이어베이스 데이터베이스 연동
-
-        databaseReference = database.getReference("Candidate"); // DB 테이블 연결
-        databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                // 파이어베이스 데이터베이스의 데이터를 받아오는 함수
-
-                Log.d("Tag", String.valueOf(dataSnapshot.child(vote_title).getValue()));
-                for(DataSnapshot snapshot : dataSnapshot.child(vote_title).getChildren()) { // 반복문으로 데이터 리스트를 추출
-                    Candidate candidate  = snapshot.getValue(Candidate.class); // 만들어둔 Candidate 객체에 데이터를 담는다.
-                    candidates.add(candidate); // 담은 데이터들을 배열에 넣고 리사이클뷰로 보낼 준비
-                }
-                adapter.notifyDataSetChanged(); // 리스트 저장 및 새로고침
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // DB를 가져오던 중 에러 발생시
-                Log.e("VoteActivity", String.valueOf(databaseError.toException()));
-            }
-
-        });
+//        database = FirebaseDatabase.getInstance(); // 파이어베이스 데이터베이스 연동
+//
+//        databaseReference = database.getReference("Candidate"); // DB 테이블 연결
+//        databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//                // 파이어베이스 데이터베이스의 데이터를 받아오는 함수
+//
+//                Log.d("Tag", String.valueOf(dataSnapshot.child(vote_title).getValue()));
+//                for(DataSnapshot snapshot : dataSnapshot.child(vote_title).getChildren()) { // 반복문으로 데이터 리스트를 추출
+//                    Candidate candidate  = snapshot.getValue(Candidate.class); // 만들어둔 Candidate 객체에 데이터를 담는다.
+//                    candidates.add(candidate); // 담은 데이터들을 배열에 넣고 리사이클뷰로 보낼 준비
+//                }
+//                adapter.notifyDataSetChanged(); // 리스트 저장 및 새로고침
+//            }
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError databaseError) {
+//                // DB를 가져오던 중 에러 발생시
+//                Log.e("VoteActivity", String.valueOf(databaseError.toException()));
+//            }
+//
+//        });
 
         tv_votedetailtitle.setText(votedetail.getTitle());
         tv_votedetailterm.setText(votedetail.getStart()+"-"+votedetail.getEnd());
@@ -154,6 +170,10 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
         }
 
         rv_votecandidatelist.setAdapter(adapter); // 리사이클러뷰에 어댑터 연결
+
+        // Mysql DB 연동
+        DB_check task = new DB_check();
+        task.execute("http://192.168.219.100:80/project/candidate_read.php");
 
         btn_votecandidateinfo.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -260,6 +280,109 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
         }
     }
 
+    // Mysql DB
+    private class DB_check extends AsyncTask<String, Void, String> {
+        ProgressDialog progressDialog;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progressDialog = ProgressDialog.show(VoteActivity.this, "Please wait...DB Loading...", null, true, true);
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+            String serverUrl = (String) strings[0];
+
+            try {
+                String selectData = "vote_id=" + vote_id;
+                URL url = new URL(serverUrl);
+                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+
+                httpURLConnection.setReadTimeout(5000);
+                httpURLConnection.setConnectTimeout(5000);
+                httpURLConnection.setRequestMethod("POST");
+                httpURLConnection.connect();
+
+                OutputStream outputStream = httpURLConnection.getOutputStream();
+                outputStream.write(selectData.getBytes("UTF-8"));
+                outputStream.flush();
+                outputStream.close();
+
+                int responseStatusCode = httpURLConnection.getResponseCode();
+                Log.d("TAG_DB", "POST response code - " + responseStatusCode);
+
+                InputStream inputStream;
+                if (responseStatusCode == HttpURLConnection.HTTP_OK) {
+                    inputStream = httpURLConnection.getInputStream();
+                } else {
+                    inputStream = httpURLConnection.getErrorStream();
+                }
+
+
+                InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF-8");
+                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+
+                StringBuilder sb = new StringBuilder();
+                String line = null;
+
+                while ((line = bufferedReader.readLine()) != null) {
+                    sb.append(line);
+                }
+                bufferedReader.close();
+
+                return sb.toString();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new String("Error: " + e.getMessage());
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+
+            jsonString = s;
+            doParse();
+            progressDialog.dismiss();
+            Log.d("TAG_DB_total", s);
+
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+            super.onProgressUpdate(values);
+        }
+
+        private void doParse(){
+            try{
+                JSONObject jsonObject = new JSONObject(jsonString);
+                JSONArray jsonArray = jsonObject.getJSONArray("candidate");
+
+                for(int i = 0; i<jsonArray.length(); i++){
+                    Candidate candidate = new Candidate();
+                    JSONObject item = jsonArray.getJSONObject(i);
+                    candidate.setCandidate_id(item.getInt("candidate_id"));
+                    candidate.setVote_id(item.getInt("vote_id"));
+                    candidate.setName(item.getString("name"));
+                    candidate.setGroup(item.getString("group"));
+                    candidate.setProfile(item.getString("profile"));
+                    candidate.setNote(item.getString("note"));
+
+                    candidates.add(candidate);
+                    adapter.notifyDataSetChanged(); // 리스트 저장 및 새로고침
+                }
+                // 기권 추가하기
+                candidates.add(new Candidate("https://firebasestorage.googleapis.com/v0/b/voteapptest-325df.appspot.com/o/%EA%B8%B0%EA%B6%8C.png?alt=media&token=130b56a0-ef2b-43cd-b4e6-2c3a4f50b7c6","기권",null, null));
+                adapter.notifyDataSetChanged();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.d("TAG_DB_error",e.getMessage());
+            }
+        }
+    }
+
     private void FindViewID() {
         toolbar = findViewById(R.id.toolbar);
 
@@ -283,4 +406,5 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
         btn_voteback.setTextSize((float) (((MainActivity)MainActivity.context_main).standardSize_X/20));
         btn_votecomplete.setTextSize((float) (((MainActivity)MainActivity.context_main).standardSize_X/20));
     }
+
 }
