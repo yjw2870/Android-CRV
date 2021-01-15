@@ -8,9 +8,12 @@ import androidx.appcompat.widget.Toolbar;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Point;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -84,8 +87,6 @@ public class MainActivity extends AppCompatActivity {
     //DB 확인용
     TextView tv_test;
     Button btn_db;
-    private String jsonString;
-    ArrayList<Votedetail> votedetails;
 
 
     private FirebaseAuth mAuth;
@@ -193,9 +194,37 @@ public class MainActivity extends AppCompatActivity {
         btn_db.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                votedetails = new ArrayList<Votedetail>();
-                DB_check task = new DB_check();
-                task.execute("http://192.168.219.100:80/project/connect.php");
+
+                DBHelper helper;
+                SQLiteDatabase db;
+                helper = new DBHelper(getApplicationContext(), "userdb.db",null, 1);
+                db = helper.getWritableDatabase();
+                helper.onCreate(db);
+                Log.d("TAG_SQLITE", "suc");
+
+                //insert data to DB
+                ContentValues values = new ContentValues();
+                values.put("vote_id", 1);
+                values.put("pub_key", "test_pk1");
+                values.put("voted", 0);
+                db.insert("pk", null, values);
+                Log.d("TAG_INSERT", "suc");
+
+                //select table - read DB
+                String sql = "select * from pk;";
+//                Cursor c = db.query("pk", null, null, null, null, null, null);
+                Cursor c = db.rawQuery(sql, null);
+//                Cursor c = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table'",null);
+                if(c.moveToFirst()) {
+//                    while (!c.isAfterLast()){
+//                        Toast.makeText(getApplicationContext(),"Table name => " +c.getString(0),Toast.LENGTH_SHORT).show();
+//                        c.moveToNext();
+//                    }
+                    while(!c.isAfterLast()){
+                        Log.d("TAG_READ", "" + c.getInt(c.getColumnIndex("vote_id")) + c.getString(c.getColumnIndex("pub_key")) + c.getInt(c.getColumnIndex("voted")));
+                        c.moveToNext();
+                    }
+                }
             }
         });
     }
@@ -378,102 +407,4 @@ public class MainActivity extends AppCompatActivity {
         btn_admin.setTextSize((float) (standardSize_X/20));
     }
 
-    private class DB_check extends AsyncTask<String, Void, String> {
-        ProgressDialog progressDialog;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            progressDialog = ProgressDialog.show(MainActivity.this, "please wait", null, true, true);
-        }
-
-        @Override
-        protected String doInBackground(String... strings) {
-            String serverUrl = (String) strings[0];
-
-            try {
-                URL url = new URL(serverUrl);
-                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-
-                httpURLConnection.setReadTimeout(5000);
-                httpURLConnection.setConnectTimeout(5000);
-                httpURLConnection.setRequestMethod("POST");
-                httpURLConnection.connect();
-
-                int responseStatusCode = httpURLConnection.getResponseCode();
-                Log.d("TAG_DB", "POST response code - " + responseStatusCode);
-
-                InputStream inputStream;
-                if (responseStatusCode == HttpURLConnection.HTTP_OK) {
-                    inputStream = httpURLConnection.getInputStream();
-                } else {
-                    inputStream = httpURLConnection.getErrorStream();
-                }
-
-
-                InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF-8");
-                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-
-                StringBuilder sb = new StringBuilder();
-                String line = null;
-
-                while ((line = bufferedReader.readLine()) != null) {
-                    sb.append(line);
-                }
-
-
-                bufferedReader.close();
-
-
-                return sb.toString();
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                return new String("Error: " + e.getMessage());
-            }
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            super.onPostExecute(s);
-
-            jsonString = s;
-            votedetails = doParse();
-            progressDialog.dismiss();
-            tv_test.setText(votedetails.get(0).getTitle());
-            Toast.makeText(getApplicationContext(), votedetails.get(0).getTitle(),Toast.LENGTH_SHORT).show();
-            Log.d("TAG_DB_1", s);
-        }
-
-        @Override
-        protected void onProgressUpdate(Void... values) {
-            super.onProgressUpdate(values);
-        }
-
-        private ArrayList<Votedetail> doParse() { //void doParse(){ //
-            ArrayList<Votedetail> tmpvotelist = new ArrayList<Votedetail>();
-            try{
-                JSONObject jsonObject = new JSONObject(jsonString);
-                JSONArray jsonArray = jsonObject.getJSONArray("votelist");
-
-                for(int i = 0; i<jsonArray.length(); i++){
-                    Votedetail votedetail = new Votedetail();
-                    JSONObject item = jsonArray.getJSONObject(i);
-                    votedetail.setTitle(item.getString("title"));
-                    votedetail.setCreated(item.getString("admin"));
-                    votedetail.setStart(item.getString("start"));
-                    votedetail.setEnd(item.getString("end"));
-                    votedetail.setType(item.getString("type"));
-                    votedetail.setNote(item.getString("note"));
-
-                    tmpvotelist.add(votedetail);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                Log.d("TAG_DB_error",e.getMessage());
-            }
-            return tmpvotelist;
-        }
-    }
 }
