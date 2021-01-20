@@ -57,7 +57,6 @@ public class VotelistAdapter extends RecyclerView.Adapter<VotelistAdapter.Voteli
 
         try {
             now = dateFormat.parse(dateFormat.format(now));
-            Log.d("TAG_DB_start",now.toString());
             start = dateFormat.parse(arrayList.get(position).getStart());
             end = dateFormat.parse(arrayList.get(position).getEnd());
         } catch (ParseException e) {

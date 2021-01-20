@@ -1,7 +1,10 @@
 package com.example.snarkportingtest;
 
 import android.app.Service;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
@@ -10,6 +13,9 @@ import androidx.annotation.NonNull;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
@@ -38,7 +44,36 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
-            Log.d(TAG, "Message data payload: " + remoteMessage.getData());
+            String data = remoteMessage.getData().toString();
+            Log.d(TAG, "Message data payload: " + data);//remoteMessage.getData());
+
+            try {
+                JSONObject jsonObject = new JSONObject(data);
+                int vote_id = jsonObject.getInt("vote_id");
+                DBHelper helper;
+                SQLiteDatabase db;
+                helper = new DBHelper(getApplicationContext(), "userdb.db",null, 1);
+                db = helper.getWritableDatabase();
+
+                // notice(vote_id) insert to votelist
+                ContentValues values = new ContentValues();
+                values.put("vote_id", vote_id);
+                values.put("title", "test_title_"+vote_id);
+                db.insert("votelist", null, values);
+
+                Cursor c = db.rawQuery("select * from votelist;", null);
+                if(c.moveToFirst()) {
+                    while(!c.isAfterLast()){
+                        Log.d("TAG_READ_votelist", "" + c.getInt(c.getColumnIndex("vote_id")) +" "+ c.getString(c.getColumnIndex("title")));
+                        c.moveToNext();
+                    }
+                }
+
+                Log.d("TAG_SQLITE", "suc");
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
 //            if (/* Check if data needs to be processed by long running job */ true) {
 //                // For long-running tasks (10 seconds or more) use WorkManager.
@@ -52,8 +87,9 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         // Check if message contains a notification payload.
         if (remoteMessage.getNotification() != null) {
-            Log.d(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
+            Log.d(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody() + remoteMessage.getNotification().getTitle());
         }
+
 
         // Also if you intend on generating your own notifications as a result of a received FCM
         // message, here is where that should be initiated. See sendNotification method below.

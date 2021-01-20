@@ -87,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
     //DB 확인용
     TextView tv_test;
     Button btn_db;
+    int i =0;
 
 
     private FirebaseAuth mAuth;
@@ -148,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //firebase message service
         FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(new OnCompleteListener<String>() {
                     @Override
@@ -163,7 +165,6 @@ public class MainActivity extends AppCompatActivity {
                         // Log and toast
                         String msg = getString(R.string.msg_token_fmt, token);
                         Log.d("Message", msg);
-//                        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
                     }
                 });
         FirebaseMessaging.getInstance().subscribeToTopic("test")
@@ -175,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
                             msg = getString(R.string.msg_subscribe_failed);
                         }
                         Log.d("cloud message", msg);
-                        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+//                        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
                     }
                 });
 
@@ -199,13 +200,42 @@ public class MainActivity extends AppCompatActivity {
                 SQLiteDatabase db;
                 helper = new DBHelper(getApplicationContext(), "userdb.db",null, 1);
                 db = helper.getWritableDatabase();
-                helper.onCreate(db);
+                if(i == 0) {
+                    helper.onUpgrade(db,1,1);
+                    ContentValues values = new ContentValues();
+                    values.put("vote_id", 1);
+                    values.put("title", "test_title_1");
+                    db.insert("votelist", null, values);
+                    values.put("vote_id", 3);
+                    values.put("title", "test_title_3");
+                    db.insert("votelist", null, values);
+                    values.put("vote_id", 5);
+                    values.put("title", "test_title_5");
+                    db.insert("votelist", null, values);
+                    values.put("vote_id", 7);
+                    values.put("title", "test_title_7");
+                    db.insert("votelist", null, values);
+
+                    Cursor c = db.rawQuery("select * from votelist;", null);
+                    if(c.moveToFirst()) {
+//                    while (!c.isAfterLast()){
+//                        Toast.makeText(getApplicationContext(),"Table name => " +c.getString(0),Toast.LENGTH_SHORT).show();
+//                        c.moveToNext();
+//                    }
+                        while(!c.isAfterLast()){
+                            Log.d("TAG_READ_votelist", "" + c.getInt(c.getColumnIndex("vote_id")) +" "+ c.getString(c.getColumnIndex("title")));
+                            c.moveToNext();
+                        }
+                    }
+                }
+
                 Log.d("TAG_SQLITE", "suc");
 
+                i++;
                 //insert data to DB
                 ContentValues values = new ContentValues();
                 values.put("vote_id", 1);
-                values.put("pub_key", "test_pk1");
+                values.put("pub_key", "test_pk"+i);
                 values.put("voted", 0);
                 db.insert("pk", null, values);
                 Log.d("TAG_INSERT", "suc");
@@ -221,7 +251,7 @@ public class MainActivity extends AppCompatActivity {
 //                        c.moveToNext();
 //                    }
                     while(!c.isAfterLast()){
-                        Log.d("TAG_READ", "" + c.getInt(c.getColumnIndex("vote_id")) + c.getString(c.getColumnIndex("pub_key")) + c.getInt(c.getColumnIndex("voted")));
+                        Log.d("TAG_READ", i+"::" + c.getInt(c.getColumnIndex("vote_id")) +" "+ c.getString(c.getColumnIndex("pub_key")) +" " + c.getInt(c.getColumnIndex("voted")));
                         c.moveToNext();
                     }
                 }
@@ -254,6 +284,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //firebase DB add user uid(아마 불필요할듯)
     private void connect(final String id){
         mHandler = new Handler();
         Thread checkUpdate = new Thread() {

@@ -3,6 +3,8 @@ package com.example.snarkportingtest;
 import android.app.AsyncNotedAppOp;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -33,6 +35,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -61,6 +64,7 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
 
     // Mysql DB
     private String jsonString;
+    private ArrayList<Integer> arr_votelist;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,6 +93,8 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
             Log.d("user_id", user_id);
         }
 
+
+
     }
 
     @Override
@@ -111,6 +117,28 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
 //                Log.e("UsermainActivity", String.valueOf(databaseError.toException()));
 //            }
 //        });
+        // sqlite check
+        DBHelper helper;
+        SQLiteDatabase db;
+        helper = new DBHelper(getApplicationContext(), "userdb.db",null, 1);
+        db = helper.getWritableDatabase();
+
+        //select table - read DB
+        arr_votelist = new ArrayList<>();
+        String sql = "select * from votelist;";
+
+        Cursor c = db.rawQuery(sql, null);
+        if(c.moveToFirst()) {
+            while(!c.isAfterLast()){
+                int vote_id;
+                Log.d("TAG_READ_usermain", "" + c.getInt(c.getColumnIndex("vote_id")) + c.getString(c.getColumnIndex("title")));
+                vote_id = c.getInt(c.getColumnIndex("vote_id"));
+                arr_votelist.add(vote_id);
+                c.moveToNext();
+            }
+            Log.d("TAG_READ_test","vote_id=" + arr_votelist.toString().replaceAll(" |\\[|\\]",""));
+        }
+
         // Mysql DB connect - Read votelist
         DB_check task = new DB_check();
         task.execute("http://192.168.219.100:80/project/votelist_read.php");
@@ -162,6 +190,8 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
         switch (item.getItemId()) {
             case R.id.action_notice:
                 Toast.makeText(this, "공지사항", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(UsermainActivity.this, NoticeActivity.class);
+                startActivity(intent);
                 break;
             case R.id.action_settings:
                 Toast.makeText(this, "설정",Toast.LENGTH_SHORT).show();
@@ -241,6 +271,11 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
                 httpURLConnection.setRequestMethod("POST");
                 httpURLConnection.connect();
 
+                OutputStream outputStream = httpURLConnection.getOutputStream();
+                outputStream.write(("vote_id=" + arr_votelist.toString().replaceAll(" |\\[|\\]","")).getBytes("UTF-8"));
+                outputStream.flush();
+                outputStream.close();
+
                 int responseStatusCode = httpURLConnection.getResponseCode();
                 Log.d("TAG_DB", "POST response code - " + responseStatusCode);
 
@@ -279,9 +314,9 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
             super.onPostExecute(s);
 
             jsonString = s;
+            Log.d("TAG_DB_total", s);
             doParse();
             progressDialog.dismiss();
-            Log.d("TAG_DB_total", s);
 
         }
 
