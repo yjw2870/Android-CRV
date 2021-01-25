@@ -44,6 +44,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
+            String notification = remoteMessage.getNotification().toString();
             String data = remoteMessage.getData().toString();
             Log.d(TAG, "Message data payload: " + data);//remoteMessage.getData());
 

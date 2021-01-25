@@ -2,6 +2,7 @@ package com.example.snarkportingtest;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
@@ -14,7 +15,7 @@ public class NoticeActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private RecyclerView.Adapter adapter;
     private RecyclerView.LayoutManager layoutManager;
-//    private ArrayList<Votedetail> votelist;   // notice로 변경해야함
+//    private ArrayList<Votedetail> votelist;   // notice로 변경해야함 - notice에 맞는 class 필요(notification title,body / data)
 
     Toolbar toolbar;
 
@@ -28,6 +29,10 @@ public class NoticeActivity extends AppCompatActivity {
 
         FindViewID();   // layout view 아이디 연결
         TextSizeSet();  // text size 자동조절
+
+        recyclerView.setHasFixedSize(true); // 리사이클러뷰 기존성능 강화
+        layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
 
         // sqlite에서 알림DB 읽어오기
 
