@@ -2,6 +2,7 @@ package com.example.snarkportingtest;
 
 import android.app.AsyncNotedAppOp;
 import android.app.ProgressDialog;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -42,6 +43,8 @@ import java.util.ArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.example.snarkportingtest.MainActivity.ip;
+
 // 알림, 설정 버튼 설정하기!!!!!!!!!
 public class UsermainActivity extends AppCompatActivity implements VotelistAdapter.OnItemClickListener {
 
@@ -66,6 +69,11 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
     private String jsonString;
     private ArrayList<Integer> arr_votelist;
 
+    // sqlite DB
+    DBHelper helper;
+    SQLiteDatabase db;
+    private ArrayList<Integer> vote_id_list;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,6 +88,7 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
         votelist = new ArrayList<>(); // Votelist 객체를 담을 어레이 리스트(어댑터 쪽으로)
+        vote_id_list = new ArrayList<>();
 
         adapter = new VotelistAdapter(votelist, this, this);
         recyclerView.setAdapter(adapter); // 리사이클러뷰에 어댑터 연결
@@ -92,7 +101,6 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
             user_id = user.getEmail().split("@")[0];
             Log.d("user_id", user_id);
         }
-
 
 
     }
@@ -118,30 +126,42 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
 //            }
 //        });
         // sqlite check
-        DBHelper helper;
-        SQLiteDatabase db;
+
         helper = new DBHelper(getApplicationContext(), "userdb.db",null, 1);
         db = helper.getWritableDatabase();
 
         //select table - read DB
-        arr_votelist = new ArrayList<>();
-        String sql = "select * from votelist;";
+        votelist.clear();
+        vote_id_list.clear();
 
-        Cursor c = db.rawQuery(sql, null);
+        Cursor c = db.rawQuery("select * from votelist;", null);
         if(c.moveToFirst()) {
             while(!c.isAfterLast()){
-                int vote_id;
-                Log.d("TAG_READ_usermain", "" + c.getInt(c.getColumnIndex("vote_id")) + c.getString(c.getColumnIndex("title")));
-                vote_id = c.getInt(c.getColumnIndex("vote_id"));
-                arr_votelist.add(vote_id);
+                Log.d("TAG_READ_votelist", "" + c.getInt(c.getColumnIndex("vote_id")));
+                vote_id_list.add(c.getInt(c.getColumnIndex("vote_id")));        // server DB와 비교하기 위함
+
+                Votedetail votedetail = new Votedetail();
+                votedetail.setVote_id(c.getInt(c.getColumnIndex("vote_id")));
+                votedetail.setTitle(c.getString(c.getColumnIndex("title")));
+                votedetail.setCreated(c.getString(c.getColumnIndex("admin")));
+                votedetail.setStart(c.getString(c.getColumnIndex("start_date")));
+                votedetail.setEnd(c.getString(c.getColumnIndex("end_date")));
+                votedetail.setType(c.getString(c.getColumnIndex("type")));
+                votedetail.setNote(c.getString(c.getColumnIndex("note")));
+
+                votelist.add(votedetail);       // 현재 폰 DB에 있는 투표정보
+                adapter.notifyDataSetChanged(); // 리스트 저장 및 새로고침
                 c.moveToNext();
             }
-            Log.d("TAG_READ_test","vote_id=" + arr_votelist.toString().replaceAll(" |\\[|\\]",""));
+//                    Log.d("Tag_sql", "제발"+vote_id_list.toString());
         }
+        Log.d("TAG_SQLITE", "suc");
 
         // Mysql DB connect - Read votelist
         DB_check task = new DB_check();
-        task.execute("http://192.168.219.100:80/project/votelist_read.php");
+        task.execute("http://"+ip+":80/project/votervotelist_read.php");   // 집 ip
+//        task.execute("http://192.168.0.168:80/project/votervotelist_read.php");     // 한양대 ip
+
     }
 
     // 뒤로가기 하단 버튼 클릭시 로그아웃
@@ -254,13 +274,15 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
         protected void onPreExecute() {
             super.onPreExecute();
 
-            votelist.clear();
             progressDialog = ProgressDialog.show(UsermainActivity.this, "Please wait...DB Loading...", null, true, true);
         }
 
         @Override
         protected String doInBackground(String... strings) {
             String serverUrl = (String) strings[0];
+
+            String postParameters = "voter="+user_id+" & votelist=" + vote_id_list.toString().replaceAll(" |\\[|\\]","");    // user id 들어가야함
+            Log.d("TAG_DB", "POST param :: " + postParameters);
 
             try {
                 URL url = new URL(serverUrl);
@@ -272,7 +294,7 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
                 httpURLConnection.connect();
 
                 OutputStream outputStream = httpURLConnection.getOutputStream();
-                outputStream.write(("vote_id=" + arr_votelist.toString().replaceAll(" |\\[|\\]","")).getBytes("UTF-8"));
+                outputStream.write(postParameters.getBytes("UTF-8"));
                 outputStream.flush();
                 outputStream.close();
 
@@ -331,8 +353,19 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
                 JSONArray jsonArray = jsonObject.getJSONArray("votelist");
 
                 for(int i = 0; i<jsonArray.length(); i++){
-                    Votedetail votedetail = new Votedetail();
                     JSONObject item = jsonArray.getJSONObject(i);
+
+                    ContentValues values = new ContentValues();
+                    values.put("vote_id", item.getInt("vote_id"));
+                    values.put("title", item.getString("title"));
+                    values.put("admin", item.getString("admin"));
+                    values.put("start_date", item.getString("start"));
+                    values.put("end_date", item.getString("end"));
+                    values.put("type", item.getString("type"));
+                    values.put("note", item.getString("note"));
+                    db.insert("votelist", null, values);
+
+                    Votedetail votedetail = new Votedetail();
                     votedetail.setVote_id(item.getInt("vote_id"));
                     votedetail.setTitle(item.getString("title"));
                     votedetail.setCreated(item.getString("admin"));
@@ -343,6 +376,15 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
 
                     votelist.add(votedetail);
                     adapter.notifyDataSetChanged(); // 리스트 저장 및 새로고침
+                }
+                String sql = "select * from votelist;";
+                Cursor c = db.rawQuery(sql, null);
+                if(c.moveToFirst()) {
+                    while(!c.isAfterLast()){
+                        int vote_id;
+                        Log.d("TAG_READ_usermain", "" + c.getInt(c.getColumnIndex("vote_id")) + c.getString(c.getColumnIndex("title")));
+                        c.moveToNext();
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();

@@ -1,15 +1,25 @@
 package com.example.snarkportingtest;
 
 import android.app.ProgressDialog;
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.InputFilter;
+import android.text.InputType;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,6 +50,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.URL;
+import java.security.MessageDigest;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -91,6 +102,15 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
     private String jsonString;
     private int vote_id;
 
+    // sqlite DB
+    DBHelper helper;
+    SQLiteDatabase db;
+    private Boolean check_pk = false; //온오프라인 투표인지 확인하기 위해 pk가 있는지 확인하기 위한 변수
+    EditText et_pwd;
+    private Boolean real_key;
+    ContentValues values;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -137,6 +157,24 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
 //
 //        });
 
+        //sqlite DB check pk_list
+        helper = new DBHelper(getApplicationContext(), "userdb.db",null, 1);
+        db = helper.getWritableDatabase();
+
+        Cursor c = db.rawQuery("select vote_id from pk where vote_id="+vote_id+";", null);
+        if(c.getCount()>0) {
+            Log.d("tag_pkcheck", ""+c.getCount());
+            check_pk = true;
+        } else {
+            Log.d("tag_pkcheck", "nothing");
+            check_pk = false;
+        }
+        // 비밀번호 입력
+        et_pwd.setFilters(new InputFilter[]{new InputFilter.LengthFilter(6)});
+        et_pwd.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+
+
+        // 투표정보 화면 표시
         tv_votedetailtitle.setText(votedetail.getTitle());
         tv_votedetailterm.setText(votedetail.getStart()+"-"+votedetail.getEnd());
         tv_votedetailtype.setText(votedetail.getType());
@@ -155,17 +193,25 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
         int now_end = now.compareTo(end);
         if(now_start >= 0) {
             if(now_end > 0) {
-                // 시작 - 종료 - 현재 // 종료된 투표
+                // 시작 - 종료 - 현재 // 종료된 투표 // 투표 완료에 따른 버튼 변경이나 화면 조정 필요
                 adapter = new EndCandidateAdapter(candidates, this);
                 vote_state = "end";
             } else {
-                // 시작 - 현재 - 종료 // 진행중 투표
-                adapter = new IngCandidateAdapter(candidates, this, this);
+                // 시작 - 현재 - 종료 // 진행중 투표 --> 투표 키 등록이 되어있으면 투표가능
+                if(check_pk) {  // 투표키 등록이 되어잇으면 투표가능
+                    adapter = new IngCandidateAdapter(candidates, this, this);
+                } else {  // 투표키 등록이 없으면 투표, 키등록 불가
+                    adapter = new EndCandidateAdapter(candidates, this);
+                }
                 vote_state = "ing";
             }
         } else {
-            // 현재 - 시작 - 종료 // 시작전 투표
+            // 현재 - 시작 - 종료 // 시작전 투표 --> 투표 키 등록 가능해야함
             adapter = new BeforeCandidateAdapter(candidates, this);
+            btn_votecomplete.setEnabled(true);
+            btn_votecomplete.setText("투표키 등록");
+            if(!check_pk) {
+            }
             vote_state = "before";
         }
 
@@ -173,7 +219,8 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
 
         // Mysql DB 연동
         DB_check task = new DB_check();
-        task.execute("http://192.168.219.100:80/project/candidate_read.php");
+        task.execute("http://"+ip+":80/project/candidate_read.php");   // 집 ip
+//        task.execute("http://192.168.0.168:80/project/candidate_read.php");     // 한양대 ip
 
         btn_votecandidateinfo.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -194,25 +241,66 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
             }
         });
         // 투표 완료 버튼 (TAG_ADMIN_SDK)
+
         btn_votecomplete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(VoteActivity.this);
-                builder.setTitle("투표확인").setMessage("\"" + voted + "\" 에게 투표하시겠습니까?").setPositiveButton("네", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent();
-                        setResult(RESULT_OK, intent);
-                        connect();
-                        intent.putExtra("title", tv_votedetailtitle.getText());
-                        intent.putExtra("voted", voted);
-                        finish();
-                    }
-                }).setNegativeButton("아니오", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
-                }).setCancelable(false);
+
+                et_pwd.setText("");
+
+                if(et_pwd.getParent() != null){
+                    ((ViewGroup)et_pwd.getParent()).removeView(et_pwd);
+                }
+                builder.setView(et_pwd);
+
+                if(check_pk && vote_state == "ing") {
+                    builder.setTitle("투표확인").setMessage("\"" + voted + "\" 에게 투표하시겠습니까?").setPositiveButton("네", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+//                            Intent intent = new Intent();
+//                            setResult(RESULT_OK, intent);
+//                            connect("vote");
+//                            intent.putExtra("title", tv_votedetailtitle.getText());
+//                            intent.putExtra("voted", voted);
+//                            finish();
+                        }
+                    }).setNegativeButton("아니오", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    }).setCancelable(false);
+                }
+                else {
+                    builder.setTitle("투표키 등록").setMessage("투표키 등록 테스트").setPositiveButton("등록", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            String sk = et_pwd.getText().toString();
+                            if(sk.length()<6){
+                                Toast.makeText(getApplicationContext(),"6자리 비밀번호를 입력하세요", Toast.LENGTH_SHORT).show();
+                            } else {
+                                real_key = true;
+                                int random_salt = (int) (Math.random() * 10000);
+
+                                String pk = sha256(sk+random_salt);
+
+                                values = new ContentValues();
+                                values.put("vote_id", vote_id);
+                                values.put("pub_key", pk);
+                                values.put("salt", random_salt);
+                                values.put("voted", "0");
+//                                db.insert("pk", null, values);
+
+                                connect("register_key");
+
+                            }
+                        }
+                    }).setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    }).setCancelable(false);
+                }
                 AlertDialog dialog = builder.create();
                 dialog.show();
             }
@@ -228,8 +316,10 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
         voted_position = position;
 //        Log.d("voted_position", String.valueOf(voted_position));
 
-        btn_votecomplete.setEnabled(true);
-        btn_votecomplete.setText("'"+voted+"' 투표");
+        if(check_pk) {
+            btn_votecomplete.setEnabled(true);
+            btn_votecomplete.setText("'"+voted+"' 투표");
+        }
     }
 
     @Override
@@ -238,7 +328,63 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
         btn_voteback.performClick();
     }
 
-    private void connect(){
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        if(vote_state == "before") {
+            MenuInflater inflater = getMenuInflater();
+            inflater.inflate(R.menu.menuitem_fakekey, menu);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_fakekey:
+                AlertDialog.Builder builder = new AlertDialog.Builder(VoteActivity.this);
+
+                et_pwd.setText("");
+
+                if(et_pwd.getParent() != null){
+                    ((ViewGroup)et_pwd.getParent()).removeView(et_pwd);
+                }
+                builder.setView(et_pwd);
+
+                builder.setTitle("투표키 등록").setMessage("가짜 투표키 등록 테스트").setPositiveButton("등록", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String sk = et_pwd.getText().toString();
+                        if(sk.length()<6){
+                            Toast.makeText(getApplicationContext(),"6자리 비밀번호를 입력하세요", Toast.LENGTH_SHORT).show();
+                        } else {
+                            real_key = false;
+                            int random_salt = (int) (Math.random() * 10000);
+
+                            String pk = sha256(sk+random_salt);
+
+                            values = new ContentValues();
+                            values.put("vote_id", vote_id);
+                            values.put("pub_key", pk);
+                            values.put("salt", random_salt);
+                            values.put("voted", "0");
+//                            db.insert("pk", null, values);
+
+                            connect("register_key");
+                        }
+                    }
+                }).setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                }).setCancelable(false);
+                AlertDialog dialog = builder.create();
+                dialog.show();
+                break;
+        }
+        return true;
+    }
+
+    private void connect(final String connect_type){
         mHandler = new Handler();
         Thread checkUpdate = new Thread() {
             public void run() {
@@ -252,11 +398,17 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
                     dos = new DataOutputStream(socket.getOutputStream());   // output에 보낼꺼 넣음
                     dis = new DataInputStream(socket.getInputStream());     // input에 받을꺼 넣어짐
 
-                    dos.writeUTF("vote_position");
-                    dos.writeUTF(tv_votedetailtitle.getText().toString()+","+voted_position+","+user_id);
-                    Log.d("data sending :", "title");
+                    if(connect_type == "vote") {
+                        dos.writeUTF(connect_type);
+                        dos.writeUTF(tv_votedetailtitle.getText().toString() + "," + voted_position + "," + user_id);
+                        Log.d("data sending :", "title");
 //                    dos.writeInt(voted_position);
 //                    Log.d("data sending :", "position");
+                    } else if(connect_type == "register_key"){
+                        dos.writeUTF(connect_type);
+                        dos.writeUTF(user_id+","+values.get("vote_id")+","+values.get("pub_key")+","+real_key);
+
+                    }
 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -265,8 +417,18 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
                     byte[] read_data = new byte[4];
                     dis.read(read_data);
                     id_check_status = new String(read_data);
-                    Log.d("id_check_status", id_check_status);
-                    Log.d("id_check_status", String.valueOf(id_check_status.equals("fail")));
+                    if(id_check_status.equals("succ")){
+                        db.insert("pk", null, values);
+                    }
+                    Log.d("tag_id_check_status", id_check_status);
+//                    Log.d("id_check_status", String.valueOf(id_check_status.equals("fail")));
+                    Cursor c = db.rawQuery("select * from pk;", null);
+                    if (c.moveToFirst()) {
+                        while (!c.isAfterLast()) {
+                            Log.d("TAG_READ_pk", "pk ::" + c.getString(c.getColumnIndex("pub_key")) + "//slat ::" + c.getInt(c.getColumnIndex("salt")));
+                            c.moveToNext();
+                        }
+                    }
                 }catch (Exception e){
                 }
             }
@@ -396,6 +558,9 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
         btn_votecomplete = findViewById(R.id.btn_votecomplete);
 
         rv_votecandidatelist = findViewById(R.id.rv_votecandidatelist);
+
+        // 투표 dialog edittext
+         et_pwd = new EditText(VoteActivity.this);
     }
     private void TextSizeSet() {
         tv_votedetailtitle.setTextSize((float) (((MainActivity)MainActivity.context_main).standardSize_X/20));
@@ -405,6 +570,22 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
         btn_votecandidateinfo.setTextSize((float) (((MainActivity)MainActivity.context_main).standardSize_X/20));
         btn_voteback.setTextSize((float) (((MainActivity)MainActivity.context_main).standardSize_X/20));
         btn_votecomplete.setTextSize((float) (((MainActivity)MainActivity.context_main).standardSize_X/20));
-    }
 
+        et_pwd.setTextSize((float) (((MainActivity)MainActivity.context_main).standardSize_X/20));
+    }
+    public static String sha256(String str) {
+        String SHA = "";
+        try{
+            MessageDigest sh = MessageDigest.getInstance("SHA-256");
+            sh.update(str.getBytes());
+            byte byteData[] = sh.digest();
+            StringBuffer sb = new StringBuffer();
+            for(int i = 0 ; i < byteData.length ; i++)
+                sb.append(Integer.toString((byteData[i]&0xff) + 0x100, 16).substring(1));
+            SHA = sb.toString();
+        }catch(Exception e) {
+            e.printStackTrace(); SHA = null;
+        }
+        return SHA;
+    }
 }

@@ -60,10 +60,11 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE = 777;
 
     public static Context context_main;
-    public int standardSize_X, standardSize_Y;
+    public static int standardSize_X, standardSize_Y;
     public float density;
 
-    public final static String ip = "192.168.0.168";
+    public final static String ip = "192.168.219.100";    // 집
+//    public final static String ip = "192.168.0.168";      // 한양대
     public final static int port = 9999;
 
 
@@ -200,46 +201,53 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
+                int random_salt = (int)(Math.random() * 1000);
+                Log.d("tag_salt", ""+random_salt);
+
                 DBHelper helper;
                 helper = new DBHelper(getApplicationContext(), "userdb.db",null, 1);
                 db = helper.getWritableDatabase();
                 helper.onUpgrade(db,1,1);
                 //for test
-                ContentValues values = new ContentValues();
-                values.put("vote_id", 1);
-                values.put("title", "vote_01");
-                values.put("admin", "a1");
-                values.put("start_date", "2020-01-01 06:00:00");
-                values.put("end_date", "2020-12-31 18:00:00");
-                values.put("type", "exponent");
-                values.put("note", "test vote_01");
-                db.insert("votelist", null, values);
-                values.put("vote_id", 3);
-                values.put("title", "vote_03");
-                values.put("admin", "a1");
-                values.put("start_date", "2020-01-01 06:00:00");
-                values.put("end_date", "2020-12-31 18:00:00");
-                values.put("type", "exponent");
-                values.put("note", "test vote_03");
-                db.insert("votelist", null, values);
+                if(i==0) {
+                    helper.onUpgrade(db,1,1);
+                    ContentValues values = new ContentValues();
+                    values.put("vote_id", 1);
+                    values.put("pub_key", "test_pk_1");
+                    values.put("salt", random_salt);
+                    values.put("voted", "0");
+                    db.insert("pk", null, values);
+//                    values.put("vote_id", 3);
+//                    values.put("title", "vote_03");
+//                    values.put("admin", "a1");
+//                    values.put("start_date", "2020-01-01 06:00:00");
+//                    values.put("end_date", "2020-12-31 18:00:00");
+//                    values.put("type", "exponent");
+//                    values.put("note", "test vote_03");
+//                    db.insert("votelist", null, values);
+                    i++;
+                }
 
-                votedetails = new ArrayList<>();
-                vote_id_list = new ArrayList<>();
-
-                Cursor c = db.rawQuery("select * from votelist;", null);
+//                votedetails = new ArrayList<>();
+//                vote_id_list = new ArrayList<>();
+//
+                Cursor c = db.rawQuery("select * from pk;", null);
+                if(c.getCount()>0) {
+                    Log.d("tag_pkcheck", ""+c.getCount());
+                } else {
+                    Log.d("tag_pkcheck", "nothing");
+                }
                 if(c.moveToFirst()) {
                     while(!c.isAfterLast()){
-                        Log.d("TAG_READ_votelist", "" + c.getInt(c.getColumnIndex("vote_id")));
-                        vote_id_list.add(c.getInt(c.getColumnIndex("vote_id")));
+                        Log.d("TAG_READ_pk", "" + c.getInt(c.getColumnIndex("salt")));
                         c.moveToNext();
                     }
-//                    Log.d("Tag_sql", "제발"+vote_id_list.toString());
                 }
-                Log.d("TAG_SQLITE", "suc");
-
-                // Mysql DB connect - Read votelist
-                DB_check task = new DB_check();
-                task.execute("http://192.168.219.100:80/project/votervotelist_read.php");
+//                Log.d("TAG_SQLITE", "suc");
+//
+//                // Mysql DB connect - Read votelist
+//                DB_check task = new DB_check();
+//                task.execute("http://192.168.219.100:80/project/votervotelist_read.php");
 
 
 //                String sql = "select * from votelist;";
@@ -320,7 +328,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        et_id.setText("12");
+        et_id.setText("a1");
         et_pwd.setText("12341234");
         et_id.requestFocus();
     }
@@ -521,10 +529,10 @@ public class MainActivity extends AppCompatActivity {
                 httpURLConnection.setReadTimeout(5000);
                 httpURLConnection.setConnectTimeout(5000);
                 httpURLConnection.setRequestMethod("POST");
-                httpURLConnection.setDoOutput(true);       //데이터를 쓸 지 설정
-                httpURLConnection.setDoInput(true);        //데이터를 읽어올지 설정
-                httpURLConnection.setRequestProperty("Content-Type","application/json");
-                httpURLConnection.setRequestProperty("Accept","application/json");
+//                httpURLConnection.setDoOutput(true);       //데이터를 쓸 지 설정
+//                httpURLConnection.setDoInput(true);        //데이터를 읽어올지 설정
+//                httpURLConnection.setRequestProperty("Content-Type","application/json");
+//                httpURLConnection.setRequestProperty("Accept","application/json");
                 httpURLConnection.connect();
 
                 OutputStream outputStream = httpURLConnection.getOutputStream();
