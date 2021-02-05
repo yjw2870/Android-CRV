@@ -45,7 +45,7 @@ extern "C" JNIEXPORT jstring JNICALL
 Java_com_example_snarkportingtest_SubActivity_stringFromJNI(
         JNIEnv* env,
         jobject jobj,
-        jstring task, jstring mode
+        jstring task, jstring mode, jstring location
         ) {
 
     libff::start_profiling();
@@ -55,6 +55,8 @@ Java_com_example_snarkportingtest_SubActivity_stringFromJNI(
 
     const char *task_ = (env)->GetStringUTFChars(task, NULL);
     const char *mode_ = (env)->GetStringUTFChars(mode, NULL);
+    const char *loc_ = (env)->GetStringUTFChars(location, NULL);
+
     char *path1, *path2;
     LOGD("task : %s", task_);
     if(strcmp("register", task_) == 0) {
@@ -66,7 +68,7 @@ Java_com_example_snarkportingtest_SubActivity_stringFromJNI(
         path2 = "/data/data/com.example.snarkportingtest/files/votein.dat";
     }
     else if(strcmp("tally", task_) == 0) {
-        path1 = "/data/data/com.example.snarkportingtest/files/tallyarith.dat";
+        path1 = "/data/data/com.example.snarkportingtest/files/allyarith.dat";
         path2 = "/data/data/com.example.snarkportingtest/files/tallyin.dat";
     }
     // Read the circuit, evaluate, and translate constraints

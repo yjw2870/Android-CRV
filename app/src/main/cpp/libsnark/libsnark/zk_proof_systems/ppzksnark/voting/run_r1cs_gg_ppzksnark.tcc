@@ -21,6 +21,8 @@
 #include <cstring>
 #include <iostream>
 #include <unistd.h>
+#include <filesystem>
+
 
 #include <libff/common/profiling.hpp>
 
@@ -28,7 +30,9 @@
 #include <android/log.h>
 #define  LOG_TAG    "NDK_TEST"
 #define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
-using namespace std;
+//using namespace std;
+namespace fs=std::__fs::filesystem;
+
 namespace libsnark {
 
 template<typename ppT>
@@ -75,31 +79,28 @@ void run_r1cs_gg_ppzksnark_setup(const r1cs_example<libff::Fr<ppT> > &example,
 
     LOGD("R1CS GG-ppzkSNARK Generator");
     r1cs_gg_ppzksnark_keypair<ppT> keypair = r1cs_gg_ppzksnark_generator<ppT>(example.constraint_system);
-    LOGD("\n"); libff::print_indent(); LOGD("after generator");
 
-    if (test_serialization)
-    {
-        LOGD("Test serialization of keys");
-        keypair.pk = libff::reserialize<r1cs_gg_ppzksnark_proving_key<ppT> >(keypair.pk);
-        keypair.vk = libff::reserialize<r1cs_gg_ppzksnark_verification_key<ppT> >(keypair.vk);
-        LOGD("Test serialization of keys");
-    }
+    LOGD("after generator");
+
     LOGD("GG-ppzkSNARK CRS Out file");
     string name1, name2;
+
     name1 = "/data/data/com.example.snarkportingtest/files/" + name + "_CRS_pk.dat";
     name2 = "/data/data/com.example.snarkportingtest/files/" + name + "_CRS_vk.dat";
-    //name1 = strcat(name1, "_CRS_pk.dat");
-    std::ofstream crs_pk_outfile(name1);
+//    fs::permissions(name1,fs::perms::owner_all | fs::perms::group_all,
+//                    fs::perm_options::add);
+    LOGD("permission changed");
+    std::ofstream crs_pk_outfile(name1, ios::trunc | ios::out | ios::binary);
     
-    //name2 = strcat(name2, "_CRS_vk.dat");
-    std::ofstream crs_vk_outfile(name2);
-    
+    std::ofstream crs_vk_outfile(name2, ios::trunc | ios::out | ios::binary);
+
     crs_pk_outfile << keypair.pk;
     crs_vk_outfile << keypair.vk; 
     crs_pk_outfile.close();
     crs_vk_outfile.close();
     LOGD("End Call to run_r1cs_gg_ppzksnark setup");
    // return keypair;
+
 }
 
 template<typename ppT>
@@ -112,47 +113,40 @@ void run_r1cs_gg_ppzksnark(const r1cs_example<libff::Fr<ppT> > &example,
     string name1, name2, name3;
     name1 = "/data/data/com.example.snarkportingtest/files/" + name + "_CRS_pk.dat";
     name2 = "/data/data/com.example.snarkportingtest/files/" + name + "_CRS_vk.dat";
-    std::ifstream infile;
-    std::ifstream crs_pk_infile(name1.c_str());
-    std::ifstream crs_vk_infile(name2.c_str());
-    // std::ifstream SF_PK_infile("SF_PK.dat");
-    // std::ifstream SF_VK_infile("SF_VK.dat"); 
-    // std::ifstream SF_CT_infile(file_name);
+//    std::ifstream infile;
+    std::ifstream crs_pk_infile(name1, ios::in | ios::binary);
+//    std::ifstream crs_vk_infile(name2, ios::in);
+
     LOGD("path : %s", name1.c_str());
+//    char buf[1000];
+//    if(crs_vk_infile.is_open()) {
+//        LOGD("vk is open");
+//        crs_vk_infile >> keypair.vk;
+//        LOGD("vk in");
+//        crs_vk_infile.close();
+//    }
+//    else
+//        LOGD("not open vk");
 
     if(crs_pk_infile.is_open() ) {
-        LOGD("pk is open");
+        LOGD("pk is open!");
         crs_pk_infile >> keypair.pk;
-        LOGD("pk in");
+        LOGD("pk in!");
+        crs_pk_infile.close();
     }
     else
         LOGD ("not open pk");
-    if(crs_vk_infile.is_open()) {
-        LOGD("vk is open");
-        crs_vk_infile >> keypair.vk;
-        LOGD("vk in");
-    }
-    else
-        LOGD("not open pk");
-    // SF_PK_infile >> SF_key.pk; SF_PK_infile.close();
-    // SF_CT_infile >> SF_ct; SF_CT_infile.close();
-    crs_pk_infile.close(); crs_vk_infile.close();
+
+
+
     LOGD("R1CS GG-ppzkSNARK Prover");
     r1cs_gg_ppzksnark_proof<ppT> proof = r1cs_gg_ppzksnark_prover<ppT>(keypair.pk, example.primary_input, example.auxiliary_input);
-    LOGD("\n"); libff::print_indent(); LOGD("after prover");
-
-    if (test_serialization)
-    {
-        LOGD("Test serialization of proof");
-        proof = libff::reserialize<r1cs_gg_ppzksnark_proof<ppT> >(proof);
-        LOGD("Test serialization of proof");
-    }
+    LOGD("after prover");
 
     LOGD("proof out");
-    // name3 = name + "_Proof.dat";
-    // name3 = name + "_proof_" + n + ".dat";
+
     name3 = "/data/data/com.example.snarkportingtest/files/" + name + "_Proof.dat";
-    std::ofstream proof_outfile(name3.c_str());
+    std::ofstream proof_outfile(name3.c_str(), ios::trunc | ios::out);
    
     proof_outfile << proof;
     proof_outfile.close();
@@ -169,22 +163,16 @@ bool run_r1cs_gg_ppzksnark_verify(const r1cs_example<libff::Fr<ppT> > &example,
     string name1, name2, name3;
     name1 = "/data/data/com.example.snarkportingtest/files/" + name + "_CRS_pk.dat";
     name2 = "/data/data/com.example.snarkportingtest/files/" + name + "_CRS_vk.dat";
-    // name3 = name + "_Proof.dat";
-    // name3 = name + "_proof_" + n + ".dat";
+
     name3 = "/data/data/com.example.snarkportingtest/files/" +  name + "_Proof.dat";
 
-    std::ifstream crs_pk_infile(name1.c_str());
-    //strcat(name2, "_CRS_vk.dat");
-    std::ifstream crs_vk_infile(name2.c_str());
-    //strcat(name3, "_Proof.dat");
-    std::ifstream proof_infile(name3.c_str());
-    // std::ifstream SF_PK_infile("SF_PK.dat");
-    // std::ifstream SF_VK_infile("SF_VK.dat"); 
-    // std::ifstream SF_CT_infile(file_name);
+    std::ifstream crs_pk_infile(name1.c_str(), ios::in);
+    std::ifstream crs_vk_infile(name2.c_str(), ios::in);
+    std::ifstream proof_infile(name3.c_str(), ios::in);
+
     crs_pk_infile >> keypair.pk; crs_pk_infile.close();
     crs_vk_infile >> keypair.vk; crs_vk_infile.close();
-    // SF_PK_infile >> SF_key.pk; SF_PK_infile.close();
-    // SF_CT_infile >> SF_ct; SF_CT_infile.close();
+
     r1cs_gg_ppzksnark_proof<ppT> proof;
     proof_infile >> proof;
     proof_infile.close();
@@ -195,7 +183,7 @@ bool run_r1cs_gg_ppzksnark_verify(const r1cs_example<libff::Fr<ppT> > &example,
 
     LOGD("R1CS GG-ppzkSNARK Verifier");
     const bool ans = r1cs_gg_ppzksnark_verifier_strong_IC<ppT>(keypair.vk, example.primary_input, proof);
-    LOGD("\n"); libff::print_indent(); LOGD("after verifier");
+    LOGD("after verifier");
     LOGD("* The verification result is: %s\n", (ans ? "PASS" : "FAIL"));
 
     LOGD("R1CS GG-ppzkSNARK Online Verifier");
@@ -208,6 +196,72 @@ bool run_r1cs_gg_ppzksnark_verify(const r1cs_example<libff::Fr<ppT> > &example,
 
     return ans;
 }
+    template<typename ppT>
+    bool run_r1cs_gg_ppzksnark_all(const r1cs_example<libff::Fr<ppT> > &example,
+                                      const bool test_serialization, string name)
+    {
+        LOGD("Call to run_r1cs_gg_ppzksnark setup");
+
+        LOGD("R1CS GG-ppzkSNARK Generator");
+        r1cs_gg_ppzksnark_keypair<ppT> keypair = r1cs_gg_ppzksnark_generator<ppT>(example.constraint_system);
+
+        LOGD("after generator");
+
+        LOGD("GG-ppzkSNARK CRS Out file");
+        string name1, name2;
+
+        name1 = "/data/data/com.example.snarkportingtest/files/" + name + "_CRS_pk.dat";
+        name2 = "/data/data/com.example.snarkportingtest/files/" + name + "_CRS_vk.dat";
+//    fs::permissions(name1,fs::perms::owner_all | fs::perms::group_all,
+//                    fs::perm_options::add);
+        LOGD("permission changed");
+        std::ofstream crs_pk_outfile(name1, ios::trunc | ios::out | ios::binary);
+
+        std::ofstream crs_vk_outfile(name2, ios::trunc | ios::out);
+
+        crs_pk_outfile << keypair.pk;
+        crs_vk_outfile << keypair.vk;
+        crs_pk_outfile.close();
+        crs_vk_outfile.close();
+        LOGD("End Call to run_r1cs_gg_ppzksnark setup");
+
+        LOGD("R1CS GG-ppzkSNARK Prover");
+        r1cs_gg_ppzksnark_proof<ppT> proof = r1cs_gg_ppzksnark_prover<ppT>(keypair.pk, example.primary_input, example.auxiliary_input);
+        LOGD("after prover");
+
+        LOGD("proof out");
+
+        string name3 = "/data/data/com.example.snarkportingtest/files/" + name + "_Proof.dat";
+        std::ofstream proof_outfile(name3.c_str(), ios::trunc | ios::out);
+
+        proof_outfile << proof;
+        proof_outfile.close();
+        LOGD("End Call to run_r1cs_gg_ppzksnark");
+
+        LOGD("Call to run_r1cs_gg_ppzksnark verify");
+
+
+        LOGD("Preprocess verification key");
+        r1cs_gg_ppzksnark_processed_verification_key<ppT> pvk = r1cs_gg_ppzksnark_verifier_process_vk<ppT>(keypair.vk);
+
+//        pvk = libff::reserialize<r1cs_gg_ppzksnark_processed_verification_key<ppT> >(pvk);
+
+        LOGD("R1CS GG-ppzkSNARK Verifier");
+        const bool ans = r1cs_gg_ppzksnark_verifier_strong_IC<ppT>(keypair.vk, example.primary_input, proof);
+        LOGD("after verifier");
+        LOGD("* The verification result is: %s\n", (ans ? "PASS" : "FAIL"));
+
+        LOGD("R1CS GG-ppzkSNARK Online Verifier");
+        const bool ans2 = r1cs_gg_ppzksnark_online_verifier_strong_IC<ppT>(pvk, example.primary_input, proof);
+        assert(ans == ans2);
+
+        test_affine_verifier<ppT>(keypair.vk, example.primary_input, proof, ans);
+
+        LOGD("End Call to run_r1cs_gg_ppzksnark verify");
+
+        return ans;
+    }
+
 
 } // libsnark
 

@@ -30,12 +30,12 @@ CircuitReader::CircuitReader(char* arithFilepath, char* inputsFilepath,
 
 void CircuitReader::parseAndEval(char* arithFilepath, char* inputsFilepath) {
 
-	libff::enter_block("Parsing and Evaluating the circuit");
+	LOGD("Parsing and Evaluating the circuit");
 
-	ifstream arithfs(arithFilepath, ifstream::in);
+	ifstream arithfs;
 	ifstream inputfs(inputsFilepath, ifstream::in);
 	string line;
-
+	arithfs.open(arithFilepath);
 	if (!arithfs.good()) {
 		LOGD("Unable to open circuit file %s \n", arithFilepath);
 		exit(-1);
@@ -221,14 +221,14 @@ void CircuitReader::parseAndEval(char* arithFilepath, char* inputsFilepath) {
 	arithfs.close();
 
 	// LOGD("\t Evaluation Done in %lf seconds \n", (double) (evalTime) * 1e-9);
-	 libff::leave_block("Parsing and Evaluating the circuit");
+ 	LOGD("Parsing and Evaluating the circuit");
 }
 
 void CircuitReader::constructCircuit(char* arithFilepath) {
 
 
 
-	cout << "Translating Constraints ... " << endl;
+	LOGD("Translating Constraints ... ");
 
 
 	#ifndef NO_PROCPS
