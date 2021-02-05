@@ -63,8 +63,8 @@ public class MainActivity extends AppCompatActivity {
     public static int standardSize_X, standardSize_Y;
     public float density;
 
-    public final static String ip = "192.168.219.100";    // 집
-//    public final static String ip = "192.168.0.168";      // 한양대
+//    public final static String ip = "192.168.219.100";    // 집
+    public final static String ip = "192.168.0.168";      // 한양대
     public final static int port = 9999;
 
 
@@ -217,19 +217,9 @@ public class MainActivity extends AppCompatActivity {
                     values.put("salt", random_salt);
                     values.put("voted", "0");
                     db.insert("pk", null, values);
-//                    values.put("vote_id", 3);
-//                    values.put("title", "vote_03");
-//                    values.put("admin", "a1");
-//                    values.put("start_date", "2020-01-01 06:00:00");
-//                    values.put("end_date", "2020-12-31 18:00:00");
-//                    values.put("type", "exponent");
-//                    values.put("note", "test vote_03");
-//                    db.insert("votelist", null, values);
                     i++;
                 }
 
-//                votedetails = new ArrayList<>();
-//                vote_id_list = new ArrayList<>();
 //
                 Cursor c = db.rawQuery("select * from pk;", null);
                 if(c.getCount()>0) {
@@ -243,84 +233,6 @@ public class MainActivity extends AppCompatActivity {
                         c.moveToNext();
                     }
                 }
-//                Log.d("TAG_SQLITE", "suc");
-//
-//                // Mysql DB connect - Read votelist
-//                DB_check task = new DB_check();
-//                task.execute("http://192.168.219.100:80/project/votervotelist_read.php");
-
-
-//                String sql = "select * from votelist;";
-//
-//                c = db.rawQuery(sql, null);
-//                if(c.moveToFirst()) {
-//                    while(!c.isAfterLast()){
-//                        int vote_id;
-//                        Log.d("TAG_READ_usermain", "" + c.getInt(c.getColumnIndex("vote_id")) + c.getString(c.getColumnIndex("title")));
-//                        c.moveToNext();
-//                    }
-//                }
-
-
-//                if(i == 0) {
-//                    helper.onUpgrade(db,1,1);
-//                    ContentValues values = new ContentValues();
-//                    values.put("vote_id", 1);
-//                    values.put("title", "test_title_1");
-//                    values.put("admin", "test_title_1");
-//                    values.put("title", "test_title_1");
-//                    values.put("title", "test_title_1");
-//                    values.put("title", "test_title_1");
-//                    values.put("title", "test_title_1");
-//                    db.insert("votelist", null, values);
-//                    values.put("vote_id", 3);
-//                    values.put("title", "test_title_3");
-//                    db.insert("votelist", null, values);
-//                    values.put("vote_id", 5);
-//                    values.put("title", "test_title_5");
-//                    db.insert("votelist", null, values);
-//                    values.put("vote_id", 7);
-//                    values.put("title", "test_title_7");
-//                    db.insert("votelist", null, values);
-//
-//                    Cursor c = db.rawQuery("select * from votelist;", null);
-//                    if(c.moveToFirst()) {
-////                    while (!c.isAfterLast()){
-////                        Toast.makeText(getApplicationContext(),"Table name => " +c.getString(0),Toast.LENGTH_SHORT).show();
-////                        c.moveToNext();
-////                    }
-//                        while(!c.isAfterLast()){
-//                            Log.d("TAG_READ_votelist", "" + c.getInt(c.getColumnIndex("vote_id")));
-//                            c.moveToNext();
-//                        }
-//                    }
-//                }
-
-
-//                i++;
-//                //insert data to DB
-//                ContentValues values = new ContentValues();
-//                values.put("vote_id", 1);
-//                values.put("pub_key", "test_pk"+i);
-//                values.put("voted", 0);
-//                db.insert("pk", null, values);
-//                Log.d("TAG_INSERT", "suc");
-//
-//                //select table - read DB
-//                String sql = "select * from pk;";
-////                Cursor c = db.query("pk", null, null, null, null, null, null);
-//                Cursor c = db.rawQuery(sql, null);
-////                Cursor c = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table'",null);
-//                if(c.moveToFirst()) {
-////                    while (!c.isAfterLast()){
-////                        Toast.makeText(getApplicationContext(),"Table name => " +c.getString(0),Toast.LENGTH_SHORT).show();
-////                        c.moveToNext();
-////                    }
-//                    while(!c.isAfterLast()){
-//                        Log.d("TAG_READ", i+"::" + c.getInt(c.getColumnIndex("vote_id")) +" "+ c.getString(c.getColumnIndex("pub_key")) +" " + c.getInt(c.getColumnIndex("voted")));
-//                        c.moveToNext();
-//                    }
-//                }
             }
         });
     }

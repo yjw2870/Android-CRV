@@ -188,7 +188,7 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
 
         if (requestCode == REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-                Toast.makeText(getApplicationContext(), "투표 완료", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(getApplicationContext(), "투표 완료", Toast.LENGTH_SHORT).show();
                 // 투표 선택 정보 확인
                 String candidate = String.valueOf(data.getExtras().getString("voted"));
                 String title = String.valueOf(data.getExtras().getString("title"));
@@ -208,6 +208,9 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
     }
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.action_renew:
+                onStart();
+                break;
             case R.id.action_notice:
                 Toast.makeText(this, "공지사항", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(UsermainActivity.this, NoticeActivity.class);

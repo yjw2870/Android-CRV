@@ -3,6 +3,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <!-- "Mark Favorite", should appear as action button if possible -->
     <item
+        android:id="@+id/action_renew"
+        android:icon="@drawable/ic_baseline_autorenew_24"
+        app:showAsAction="ifRoom"
+        android:title="notification" />
+    <item
         android:id="@+id/action_notice"
         android:icon="@drawable/ic_baseline_notifications_none_24"
         app:showAsAction="ifRoom"

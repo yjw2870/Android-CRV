@@ -111,7 +111,7 @@ public class UsersignupActivity extends AppCompatActivity {
                 AlertDialog.Builder builder = new AlertDialog.Builder(UsersignupActivity.this);
                 userid = et_signupid.getText().toString().toLowerCase();
                 // 수정필요(아이디 영어 + 숫자 확인)
-                if (Pattern.matches("^[a-zA-Z][0-9a-zA-Z]*$", userid)) {
+                if (Pattern.matches("^[0-9a-zA-Z]*$", userid)) {
                     if (!userid.equals(null)) {
                         // DB 아이디와 중복체크 필요, racecondition 체크 (TAG_ADMIN_SDK)
                         connect();

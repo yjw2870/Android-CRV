@@ -49,6 +49,7 @@
                     android:layout_weight="1"
                     android:hint="아이디를 입력하세요"
                     android:singleLine="true"
+                    android:inputType="textVisiblePassword"
                     android:textSize="20sp" />
 
                 <Button
@@ -125,6 +126,7 @@
                 android:layout_height="wrap_content"
                 android:hint="이름를 입력하세요"
                 android:singleLine="true"
+                android:inputType="textVisiblePassword"
                 android:textSize="20sp" />
         </LinearLayout>
 
@@ -152,6 +154,7 @@
                     android:layout_weight="1"
                     android:hint="전화번호(숫자만)를 입력하세요"
                     android:singleLine="true"
+                    android:inputType="number"
                     android:textSize="20sp" />
 
                 <Button

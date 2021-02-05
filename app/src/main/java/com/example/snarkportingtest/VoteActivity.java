@@ -18,6 +18,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -134,28 +135,6 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
         candidates = new ArrayList<>(); // Candidate 객체를 담을 어레이 리스트(어댑터 쪽으로)
         candidates.clear(); // 기존 배열 초기화
 
-//        database = FirebaseDatabase.getInstance(); // 파이어베이스 데이터베이스 연동
-//
-//        databaseReference = database.getReference("Candidate"); // DB 테이블 연결
-//        databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-//                // 파이어베이스 데이터베이스의 데이터를 받아오는 함수
-//
-//                Log.d("Tag", String.valueOf(dataSnapshot.child(vote_title).getValue()));
-//                for(DataSnapshot snapshot : dataSnapshot.child(vote_title).getChildren()) { // 반복문으로 데이터 리스트를 추출
-//                    Candidate candidate  = snapshot.getValue(Candidate.class); // 만들어둔 Candidate 객체에 데이터를 담는다.
-//                    candidates.add(candidate); // 담은 데이터들을 배열에 넣고 리사이클뷰로 보낼 준비
-//                }
-//                adapter.notifyDataSetChanged(); // 리스트 저장 및 새로고침
-//            }
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError databaseError) {
-//                // DB를 가져오던 중 에러 발생시
-//                Log.e("VoteActivity", String.valueOf(databaseError.toException()));
-//            }
-//
-//        });
 
         //sqlite DB check pk_list
         helper = new DBHelper(getApplicationContext(), "userdb.db",null, 1);
@@ -258,12 +237,10 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
                     builder.setTitle("투표확인").setMessage("\"" + voted + "\" 에게 투표하시겠습니까?").setPositiveButton("네", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-//                            Intent intent = new Intent();
-//                            setResult(RESULT_OK, intent);
-//                            connect("vote");
-//                            intent.putExtra("title", tv_votedetailtitle.getText());
-//                            intent.putExtra("voted", voted);
-//                            finish();
+                            String sk = et_pwd.getText().toString();
+                            connect("vote");
+                            Toast.makeText(getApplicationContext(), "투표 완료", Toast.LENGTH_SHORT).show();
+                            finish();
                         }
                     }).setNegativeButton("아니오", new DialogInterface.OnClickListener() {
                         @Override
@@ -292,6 +269,11 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
 //                                db.insert("pk", null, values);
 
                                 connect("register_key");
+                                if(id_check_status.equals("succ")) {
+                                    Toast.makeText(getApplicationContext(), "키 등록 완료", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(getApplicationContext(), "키 등록 실패", Toast.LENGTH_SHORT).show();
+                                }
 
                             }
                         }
@@ -302,6 +284,7 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
                     }).setCancelable(false);
                 }
                 AlertDialog dialog = builder.create();
+                dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
                 dialog.show();
             }
         });
@@ -370,6 +353,11 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
 //                            db.insert("pk", null, values);
 
                             connect("register_key");
+                            if(id_check_status.equals("succ")) {
+                                Toast.makeText(getApplicationContext(), "키 등록 완료", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(getApplicationContext(), "키 등록 실패", Toast.LENGTH_SHORT).show();
+                            }
                         }
                     }
                 }).setNegativeButton("취소", new DialogInterface.OnClickListener() {
@@ -404,32 +392,41 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
                         Log.d("data sending :", "title");
 //                    dos.writeInt(voted_position);
 //                    Log.d("data sending :", "position");
+
+                        byte[] read_data = new byte[4];
+                        dis.read(read_data);
+                        id_check_status = new String(read_data);
+
+                        Log.d("tag_id_check_status", id_check_status);
+                        if(id_check_status.equals("succ")){
+                            Intent intent = new Intent();
+                            setResult(RESULT_OK, intent);
+                            intent.putExtra("title", tv_votedetailtitle.getText());
+                            intent.putExtra("voted", voted);
+                        }
+
                     } else if(connect_type == "register_key"){
                         dos.writeUTF(connect_type);
                         dos.writeUTF(user_id+","+values.get("vote_id")+","+values.get("pub_key")+","+real_key);
 
-                    }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    byte[] read_data = new byte[4];
-                    dis.read(read_data);
-                    id_check_status = new String(read_data);
-                    if(id_check_status.equals("succ")){
-                        db.insert("pk", null, values);
-                    }
-                    Log.d("tag_id_check_status", id_check_status);
-//                    Log.d("id_check_status", String.valueOf(id_check_status.equals("fail")));
-                    Cursor c = db.rawQuery("select * from pk;", null);
-                    if (c.moveToFirst()) {
-                        while (!c.isAfterLast()) {
-                            Log.d("TAG_READ_pk", "pk ::" + c.getString(c.getColumnIndex("pub_key")) + "//slat ::" + c.getInt(c.getColumnIndex("salt")));
-                            c.moveToNext();
+                        byte[] read_data = new byte[4];
+                        dis.read(read_data);
+                        id_check_status = new String(read_data);
+                        if(id_check_status.equals("succ")){
+                            db.insert("pk", null, values);
+                        }
+                        // insert DB check
+                        Cursor c = db.rawQuery("select * from pk;", null);
+                        if (c.moveToFirst()) {
+                            while (!c.isAfterLast()) {
+                                Log.d("TAG_READ_pk", "pk ::" + c.getString(c.getColumnIndex("pub_key")) + "//slat ::" + c.getInt(c.getColumnIndex("salt")));
+                                c.moveToNext();
+                            }
                         }
                     }
-                }catch (Exception e){
+
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         };
