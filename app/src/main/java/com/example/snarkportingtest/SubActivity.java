@@ -10,13 +10,15 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 
 import java.io.File;
 
+
 public class SubActivity extends AppCompatActivity {
-    String task =  "/data/data/com.example.snarkportingtest/files/" ;
-    String mode = "all";
+    String loc =  "/data/data/com.example.snarkportingtest/files/" ;
+
 //     Used to load the 'native-lib' library on application startup.
     static {
         System.loadLibrary("native-lib");
@@ -49,34 +51,35 @@ public class SubActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sub);
-
-        String text = null;
-        try {
-            text = task + "votearith.txt";
-            CopyIfNotExist(R.raw.votearith, text);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        text = null;
-        try {
-            text = task + "voteinput.txt";
-            CopyIfNotExist(R.raw.voteinput, text);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-        // Example of a call to a native method
-//        TextView tv = findViewById(R.id.sample_text);
-//        tv.setText(stringFromJNI("vote", "setup"));
+        TextView tv = findViewById(R.id.sample_text);
+        tv.setText("testing...");
 
         Intent start_intent = getIntent();
-        String vote = (String) start_intent.getExtras().get("vote");
-        String setup = (String) start_intent.getExtras().get("setup");
+        String task = (String) start_intent.getExtras().get("task");
+        String mode = (String) start_intent.getExtras().get("mode");
 
-        final String result = stringFromJNI("vote", "setup");
+        try {
+            String text = loc + task +"arith.dat";
+            CopyIfNotExist(R.raw.registerarith, text);
+//            Log.d("test", "onCreate: "+text);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
+        try {
+            String text = loc + task + "in.dat";
+            CopyIfNotExist(R.raw.registerin, text);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+//         Example of a call to a native method
+//        String result = stringFromJNI(task, mode);
+//        tv.setText(result);
+
+        final String result = stringFromJNI(task, mode);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(SubActivity.this);
         builder.setTitle("proof 확인").setMessage("Proof 확인 : "+result).setPositiveButton("확인", new DialogInterface.OnClickListener() {
@@ -90,7 +93,9 @@ public class SubActivity extends AppCompatActivity {
         }).setCancelable(false);
         AlertDialog dialog = builder.create();
         dialog.show();
+
     }
+
 
     /**
      * A native method that is implemented by the 'native-lib' native library,
