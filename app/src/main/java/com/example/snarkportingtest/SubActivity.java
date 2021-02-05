@@ -6,6 +6,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.FileOutputStream;
+
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -17,6 +19,7 @@ import java.io.File;
 
 
 public class SubActivity extends AppCompatActivity {
+//    ProgressDialog progressDialog;
     String loc =  "/data/data/com.example.snarkportingtest/files/" ;
 
 //     Used to load the 'native-lib' library on application startup.
@@ -51,8 +54,8 @@ public class SubActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sub);
-        TextView tv = findViewById(R.id.sample_text);
-        tv.setText("testing...");
+
+//        progressDialog = ProgressDialog.show(SubActivity.this, "SNARK-CHECK...", null, true, true);
 
         Intent start_intent = getIntent();
         String task = (String) start_intent.getExtras().get("task");
@@ -60,7 +63,7 @@ public class SubActivity extends AppCompatActivity {
 
         try {
             String text = loc + task +"arith.txt";
-            CopyIfNotExist(R.raw.registerarith, text);
+            CopyIfNotExist(R.raw.votearith, text);
 //            Log.d("test", "onCreate: "+text);
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -69,7 +72,7 @@ public class SubActivity extends AppCompatActivity {
 
         try {
             String text = loc + task + "in.txt";
-            CopyIfNotExist(R.raw.registerin, text);
+            CopyIfNotExist(R.raw.votein, text);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -81,6 +84,7 @@ public class SubActivity extends AppCompatActivity {
 
         final String result = stringFromJNI(task, mode, loc);
 
+//        progressDialog.dismiss();
         AlertDialog.Builder builder = new AlertDialog.Builder(SubActivity.this);
         builder.setTitle("proof 확인").setMessage("Proof 확인 : "+result).setPositiveButton("확인", new DialogInterface.OnClickListener() {
             @Override
