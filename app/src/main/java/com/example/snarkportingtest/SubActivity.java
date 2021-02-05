@@ -59,7 +59,7 @@ public class SubActivity extends AppCompatActivity {
         String mode = (String) start_intent.getExtras().get("mode");
 
         try {
-            String text = loc + task +"arith.dat";
+            String text = loc + task +"arith.txt";
             CopyIfNotExist(R.raw.registerarith, text);
 //            Log.d("test", "onCreate: "+text);
         } catch (IOException e) {
@@ -68,7 +68,7 @@ public class SubActivity extends AppCompatActivity {
         }
 
         try {
-            String text = loc + task + "in.dat";
+            String text = loc + task + "in.txt";
             CopyIfNotExist(R.raw.registerin, text);
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -79,7 +79,7 @@ public class SubActivity extends AppCompatActivity {
 //        String result = stringFromJNI(task, mode);
 //        tv.setText(result);
 
-        final String result = stringFromJNI(task, mode);
+        final String result = stringFromJNI(task, mode, loc);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(SubActivity.this);
         builder.setTitle("proof 확인").setMessage("Proof 확인 : "+result).setPositiveButton("확인", new DialogInterface.OnClickListener() {
@@ -101,5 +101,5 @@ public class SubActivity extends AppCompatActivity {
      * A native method that is implemented by the 'native-lib' native library,
      * which is packaged with this application.
      */
-    public native String stringFromJNI(String task, String mode);
+    public native String stringFromJNI(String task, String mode, String loc);
 }

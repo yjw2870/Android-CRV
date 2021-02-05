@@ -60,16 +60,16 @@ Java_com_example_snarkportingtest_SubActivity_stringFromJNI(
     char *path1, *path2;
     LOGD("task : %s", task_);
     if(strcmp("register", task_) == 0) {
-        path1 = "/data/data/com.example.snarkportingtest/files/registerarith.dat";
-        path2 = "/data/data/com.example.snarkportingtest/files/registerin.dat";
+        path1 = "/data/data/com.example.snarkportingtest/files/registerarith.txt";
+        path2 = "/data/data/com.example.snarkportingtest/files/registerin.txt";
     }
     else if(strcmp("vote", task_) == 0) {
-        path1 = "/data/data/com.example.snarkportingtest/files/votearith.dat";
-        path2 = "/data/data/com.example.snarkportingtest/files/votein.dat";
+        path1 = "/data/data/com.example.snarkportingtest/files/votearith.txt";
+        path2 = "/data/data/com.example.snarkportingtest/files/votein.txt";
     }
     else if(strcmp("tally", task_) == 0) {
-        path1 = "/data/data/com.example.snarkportingtest/files/allyarith.dat";
-        path2 = "/data/data/com.example.snarkportingtest/files/tallyin.dat";
+        path1 = "/data/data/com.example.snarkportingtest/files/allyarith.txt";
+        path2 = "/data/data/com.example.snarkportingtest/files/tallyin.txt";
     }
     // Read the circuit, evaluate, and translate constraints
     LOGD("path : %s, %s", path1, path2);
