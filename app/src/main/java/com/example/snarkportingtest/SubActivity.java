@@ -60,22 +60,43 @@ public class SubActivity extends AppCompatActivity {
         Intent start_intent = getIntent();
         String task = (String) start_intent.getExtras().get("task");
         String mode = (String) start_intent.getExtras().get("mode");
-
-        try {
-            String text = loc + task +"arith.txt";
-            CopyIfNotExist(R.raw.votearith, text);
+        if(task.equals("vote")) {
+            Log.d("task", task);
+            try {
+                String text = loc + task + "arith.dat";
+                CopyIfNotExist(R.raw.votearith, text);
 //            Log.d("test", "onCreate: "+text);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
 
-        try {
-            String text = loc + task + "in.txt";
-            CopyIfNotExist(R.raw.votein, text);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            try {
+                String text = loc + task + "in.dat";
+                CopyIfNotExist(R.raw.votein, text);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        if(task.equals("register")) {
+            Log.d("task", task);
+            try {
+                String text = loc + task + "arith.dat";
+                CopyIfNotExist(R.raw.registerarith, text);
+//            Log.d("test", "onCreate: "+text);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            try {
+                String text = loc + task + "in.dat";
+                CopyIfNotExist(R.raw.registerin, text);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
 
 //         Example of a call to a native method

@@ -221,7 +221,7 @@ void CircuitReader::parseAndEval(char* arithFilepath, char* inputsFilepath) {
 	arithfs.close();
 
 	// LOGD("\t Evaluation Done in %lf seconds \n", (double) (evalTime) * 1e-9);
- 	LOGD("Parsing and Evaluating the circuit");
+ 	LOGD("Parsing and Evaluating the circuit done");
 }
 
 void CircuitReader::constructCircuit(char* arithFilepath) {
@@ -232,12 +232,14 @@ void CircuitReader::constructCircuit(char* arithFilepath) {
 
 
 	#ifndef NO_PROCPS
+	LOGD("NO PROCPS");
 	struct proc_t usage1, usage2;
 	look_up_our_self(&usage1);
-        #endif
+      #endif
 
 
 	unsigned int i;
+    LOGD("%d %d %d", numInputs, numOutputs, numNizkInputs);
 
 	currentVariableIdx = currentLinearCombinationIdx = 0;
 	for (i = 0; i < numInputs; i++) {
@@ -277,6 +279,7 @@ void CircuitReader::constructCircuit(char* arithFilepath) {
 	int lineCount = 0;
 	while (getline(ifs2, line)) {
 		lineCount++;
+		LOGD("%d : %s", lineCount, line.c_str());
 //		if (lineCount % 100000 == 0) {
 //			LOGD("At Line:: %d\n", lineCount);
 //		}
@@ -337,11 +340,11 @@ void CircuitReader::constructCircuit(char* arithFilepath) {
 
 
 
-	#ifndef NO_PROCPS
-	look_up_our_self(&usage2);
-	unsigned long diff = usage2.vsize - usage1.vsize;
-	LOGD("\tMemory usage for constraint translation: %lu MB\n", diff >> 20);
-        #endif
+//	#ifndef NO_PROCPS
+//	look_up_our_self(&usage2);
+//	unsigned long diff = usage2.vsize - usage1.vsize;
+//	LOGD("\tMemory usage for constraint translation: %lu MB\n", diff >> 20);
+//        #endif
 
 }
 
