@@ -63,7 +63,7 @@ public class SubActivity extends AppCompatActivity {
         if(task.equals("vote")) {
             Log.d("task", task);
             try {
-                String text = loc + task + "arith.dat";
+                String text = loc + task + "arith.txt";
                 CopyIfNotExist(R.raw.votearith, text);
 //            Log.d("test", "onCreate: "+text);
             } catch (IOException e) {
@@ -72,7 +72,7 @@ public class SubActivity extends AppCompatActivity {
             }
 
             try {
-                String text = loc + task + "in.dat";
+                String text = loc + task + "in.txt";
                 CopyIfNotExist(R.raw.votein, text);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
@@ -82,7 +82,7 @@ public class SubActivity extends AppCompatActivity {
         if(task.equals("register")) {
             Log.d("task", task);
             try {
-                String text = loc + task + "arith.dat";
+                String text = loc + task + "arith.txt";
                 CopyIfNotExist(R.raw.registerarith, text);
 //            Log.d("test", "onCreate: "+text);
             } catch (IOException e) {
@@ -91,8 +91,27 @@ public class SubActivity extends AppCompatActivity {
             }
 
             try {
-                String text = loc + task + "in.dat";
+                String text = loc + task + "in.txt";
                 CopyIfNotExist(R.raw.registerin, text);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        if(task.equals("tally")) {
+            Log.d("task", task);
+            try {
+                String text = loc + task + "arith.txt";
+                CopyIfNotExist(R.raw.tallyarith, text);
+//            Log.d("test", "onCreate: "+text);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            try {
+                String text = loc + task + "in.txt";
+                CopyIfNotExist(R.raw.tallyin, text);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
