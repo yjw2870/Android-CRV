@@ -70,6 +70,7 @@ std::ostream& operator<<(std::ostream &out, const r1cs_gg_ppzksnark_proving_key<
 template<typename ppT>
 std::istream& operator>>(std::istream &in, r1cs_gg_ppzksnark_proving_key<ppT> &pk)
 {
+    LOGD("PK reading");
     in >> pk.alpha_g1;
     libff::consume_OUTPUT_NEWLINE(in);
     LOGD("1 in");

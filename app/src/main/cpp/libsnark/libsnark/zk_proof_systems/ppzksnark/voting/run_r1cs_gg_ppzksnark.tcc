@@ -90,9 +90,9 @@ void run_r1cs_gg_ppzksnark_setup(const r1cs_example<libff::Fr<ppT> > &example,
 //    fs::permissions(name1,fs::perms::owner_all | fs::perms::group_all,
 //                    fs::perm_options::add);
     LOGD("permission changed");
-    std::ofstream crs_pk_outfile(name1, ios::trunc | ios::out | ios::binary);
+    std::ofstream crs_pk_outfile(name1, ios::trunc);
     
-    std::ofstream crs_vk_outfile(name2, ios::trunc | ios::out | ios::binary);
+    std::ofstream crs_vk_outfile(name2, ios::trunc);
 
     crs_pk_outfile << keypair.pk;
     crs_vk_outfile << keypair.vk; 
@@ -114,28 +114,16 @@ void run_r1cs_gg_ppzksnark(const r1cs_example<libff::Fr<ppT> > &example,
     name1 = "/data/data/com.example.snarkportingtest/files/" + name + "_CRS_pk.dat";
     name2 = "/data/data/com.example.snarkportingtest/files/" + name + "_CRS_vk.dat";
 //    std::ifstream infile;
-    std::ifstream crs_pk_infile(name1, ios::in | ios::binary);
-//    std::ifstream crs_vk_infile(name2, ios::in);
-
-    LOGD("path : %s", name1.c_str());
-//    char buf[1000];
-//    if(crs_vk_infile.is_open()) {
-//        LOGD("vk is open");
-//        crs_vk_infile >> keypair.vk;
-//        LOGD("vk in");
-//        crs_vk_infile.close();
-//    }
-//    else
-//        LOGD("not open vk");
-
-    if(crs_pk_infile.is_open() ) {
-        LOGD("pk is open!");
+    std::ifstream crs_pk_infile(name1, std::ifstream::in);
+    if (!crs_pk_infile.good()) {
+        LOGD("Unable to open circuit file %s \n", name1.c_str());
+        exit(-1);
+    }
+    else {
         crs_pk_infile >> keypair.pk;
         LOGD("pk in!");
         crs_pk_infile.close();
     }
-    else
-        LOGD ("not open pk");
 
 
 
@@ -214,7 +202,6 @@ bool run_r1cs_gg_ppzksnark_verify(const r1cs_example<libff::Fr<ppT> > &example,
         name2 = "/data/data/com.example.snarkportingtest/files/" + name + "_CRS_vk.dat";
 //    fs::permissions(name1,fs::perms::owner_all | fs::perms::group_all,
 //                    fs::perm_options::add);
-        LOGD("permission changed");
         std::ofstream crs_pk_outfile(name1, ios::trunc | ios::out | ios::binary);
 
         std::ofstream crs_vk_outfile(name2, ios::trunc | ios::out);

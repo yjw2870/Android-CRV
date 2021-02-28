@@ -101,8 +101,10 @@ void CircuitReader::parseAndEval(char* arithFilepath, char* inputsFilepath) {
 	// evalTime = 0;
 
 	// Parse the circuit: few lines were imported from Pinocchio's code.
-
+//    int lineCount = 0;
 	while (getline(arithfs, line)) {
+//        lineCount++;
+//        LOGD("%d : %s", lineCount, line.c_str());
 		if (line.length() == 0) {
 			continue;
 		}
@@ -258,14 +260,14 @@ void CircuitReader::constructCircuit(char* arithFilepath) {
 		currentVariableIdx++;
 	}
 
-	char type[200];
+	char* type;
 	char* inputStr;
 	char* outputStr;
 	string line;
 	unsigned int numGateInputs, numGateOutputs;
 
 	ifstream ifs2(arithFilepath, ifstream::in);
-
+//    ifs2.open(arithFilepath);
 	if (!ifs2.good()) {
 		LOGD("Unable to open circuit file:\n");
 		exit(5);
@@ -275,7 +277,9 @@ void CircuitReader::constructCircuit(char* arithFilepath) {
 
 	getline(ifs2, line);
 	sscanf(line.c_str(), "total %d", &numWires);
-
+	inputStr = new char[2048];
+	outputStr = new char[2048];
+	type = new char[200];
 	int lineCount = 0;
 	while (getline(ifs2, line)) {
 		lineCount++;
@@ -287,8 +291,9 @@ void CircuitReader::constructCircuit(char* arithFilepath) {
 		if (line.length() == 0) {
 			continue;
 		}
-		inputStr = new char[line.size()];
-		outputStr = new char[line.size()];
+//		inputStr = new char[line.size()];
+//		outputStr = new char[line.size()];
+//		type = new char[200];
 
 		if (5
 				== sscanf(line.c_str(), "%s in %d <%[^>]> out %d <%[^>]>", type,
@@ -329,11 +334,14 @@ void CircuitReader::constructCircuit(char* arithFilepath) {
 		} else {
 //			assert(0);
 		}
-		delete[] inputStr;
-		delete[] outputStr;
+//		delete[] inputStr;
+//		delete[] outputStr;
+//		delete[] type;
 		clean();
 	}
-
+	delete[] inputStr;
+	delete[] outputStr;
+	delete[] type;
 	ifs2.close();
 
 	LOGD("\tConstraint translation done\n");
