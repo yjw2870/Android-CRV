@@ -64,8 +64,10 @@ public class MainActivity extends AppCompatActivity {
     public float density;
 
 //    public final static String ip = "192.168.219.100";    // 집
-    public final static String ip = "192.168.0.168";      // 한양대
-    public final static int port = 9999;
+//    public final static String ip = "192.168.0.168";      // 한양대
+//    public final static int port = 9999;
+    public final static String ip = "222.111.165.26";  //국민대
+    public final static int port = 9090;
 
 
     Button btn_login;
@@ -191,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, SubActivity.class);
                 intent.putExtra("task","vote");
-                intent.putExtra("mode","all");
+                intent.putExtra("mode","run");
                 startActivityForResult(intent, SNARK_CODE);
             }
         });
