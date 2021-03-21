@@ -198,9 +198,9 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
 
         // Mysql DB 연동
         DB_check task = new DB_check();
-        task.execute("http://"+ip+":80/project/candidate_read.php");   // 집 ip
+//        task.execute("http://"+ip+":8080/project/candidate_read.php");   // 집 ip
 //        task.execute("http://192.168.0.168:80/project/candidate_read.php");     // 한양대 ip
-
+        task.execute("http://"+ip+":8080/candidate_read.php");   // 국민대 ip
         btn_votecandidateinfo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -460,6 +460,9 @@ public class VoteActivity extends AppCompatActivity implements IngCandidateAdapt
 
                 httpURLConnection.setReadTimeout(5000);
                 httpURLConnection.setConnectTimeout(5000);
+                httpURLConnection.setRequestProperty("content-type", "application/x-www-form-urlencoded");
+                httpURLConnection.setDoInput(true);                         // 서버에서 읽기 모드 지정
+                httpURLConnection.setDoOutput(true);                       // 서버로 쓰기 모드 지정
                 httpURLConnection.setRequestMethod("POST");
                 httpURLConnection.connect();
 

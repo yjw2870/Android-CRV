@@ -95,7 +95,7 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
         recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));  // 투표목록 구분선
 
         database = FirebaseDatabase.getInstance(); // 파이어베이스 데이터베이스 연동
-
+        votelist.clear();
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();        // user id 확인 및 설정
         if(user != null) {
             user_id = user.getEmail().split("@")[0];
@@ -159,9 +159,9 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
 
         // Mysql DB connect - Read votelist
         DB_check task = new DB_check();
-        task.execute("http://"+ip+":80/project/votervotelist_read.php");   // 집 ip
+//        task.execute("http://"+ip+":80/project/votervotelist_read.php");   // 집 ip
 //        task.execute("http://192.168.0.168:80/project/votervotelist_read.php");     // 한양대 ip
-
+        task.execute("http://"+ip+":8080/votelist_read.php");   // 국민대 ip
     }
 
     // 뒤로가기 하단 버튼 클릭시 로그아웃
@@ -293,6 +293,9 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
 
                 httpURLConnection.setReadTimeout(5000);
                 httpURLConnection.setConnectTimeout(5000);
+                httpURLConnection.setRequestProperty("content-type", "application/x-www-form-urlencoded");
+                httpURLConnection.setDoInput(true);                         // 서버에서 읽기 모드 지정
+                httpURLConnection.setDoOutput(true);                       // 서버로 쓰기 모드 지정
                 httpURLConnection.setRequestMethod("POST");
                 httpURLConnection.connect();
 
@@ -325,7 +328,7 @@ public class UsermainActivity extends AppCompatActivity implements VotelistAdapt
 
                 bufferedReader.close();
 
-
+                Log.d("INCOMING MSG : ", sb.toString());
                 return sb.toString();
 
             } catch (Exception e) {

@@ -54,7 +54,8 @@ public class VotelistAdapter extends RecyclerView.Adapter<VotelistAdapter.Voteli
         holder.tv_votestart.setText("시작 : "+arrayList.get(position).getStart());
         holder.tv_voteend.setText("종료 : "+arrayList.get(position).getEnd());
         holder.tv_votetype.setText(arrayList.get(position).getType());
-
+        Log.d("arrayList", arrayList.get(position).getStart());
+        Log.d("arrayList", arrayList.get(position).getEnd());
         try {
             now = dateFormat.parse(dateFormat.format(now));
             start = dateFormat.parse(arrayList.get(position).getStart());
