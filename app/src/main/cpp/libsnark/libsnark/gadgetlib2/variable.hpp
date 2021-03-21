@@ -259,6 +259,7 @@ namespace gadgetlib2 {
 
 /**
     @brief A formal variable, field agnostic.
+
     Each variable is specified by an index. This can be imagined as the index in x_1, x_2,..., x_i
     These are formal variables and do not hold an assignment, later the class VariableAssignment
     will give each formal variable its own assignment.
